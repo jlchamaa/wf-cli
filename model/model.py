@@ -1,33 +1,37 @@
 #!/usr/bin/env python3
 import os
+import sys
 from lazy import lazy
 import requests
 import yaml
-
-class Document:
-    def __init__(self, doc_id):
-        self.doc_id = doc_id
-        self.children = []
-        self.content = ""
 
 
 class UserInfo:
     CONFIG_FILE = "~/.wfclirc"
     URL = {"login": "https://workflowy.com/ajax_login",
+           "initialize": "https://workflowy.com/get_initialization_data?client_version=20",
             }
 
     def __init__(self):
-        self.root = Document("blue")
         self.session = requests.Session()
+        self.session_id
+        self.data = self.get_data()
+        self.root = self.data["projectTreeData"]["mainnProjectTreeInfo"]["rootProjectChildren"]
+
+    def get_data(self):
+        return self.session.post(self.URL["initialize"],
+                                 cookies=self.session_cookies).json()
 
     @lazy
     def session_id(self):
         """ Returns the session id" for the login session.
         Creates a new session if there isn't one, or the
         current is expired """
-
         rc_path = os.path.expanduser(self.CONFIG_FILE)
         data = None
+        if not os.path.exists(rc_path):
+            print("{} not found.  Please create the file first!".format(rc_path))
+            sys.exit(1)
         with open(rc_path, 'r') as f:
             data = f.read()
         yaml_data = yaml.safe_load(data).split(' ')
@@ -41,11 +45,15 @@ class UserInfo:
 
     def _log_in(self, usr, pw):
         payload = {"username": usr, "password": pw}
-        result = self.session.post(self.URL["login"],
+        response = self.session.post(self.URL["login"],
                                    data=payload,
                                    )
-        if result.json()["success"]:
-            self.session_cookies = result.cookies
-            return (True, result.json()["sid"])
+        result = response.json()
+        if "errors" in result:
+            print("Login Error. {}".format(result["errors"]["__all__"]))
+            sys.exit(1)
+        if result["success"]:
+            self.session_cookies = response.cookies
+            return (True, result["sid"])
         else:
             return (False, False)
