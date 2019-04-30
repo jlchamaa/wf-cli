@@ -1,11 +1,9 @@
 #!/usr/bin/env python3
-from model.model import UserInfo
-from pdb import set_trace
+from view_model.view_model import ViewModel
 
 def main():
-    User = UserInfo()
-    set_trace()
-
+    vm = ViewModel()
+    vm.recieve_commands()
 
 if __name__ == "__main__":
     main()

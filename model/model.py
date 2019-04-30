@@ -16,7 +16,7 @@ class UserInfo:
         self.session = requests.Session()
         self.session_id
         self.data = self.get_data()
-        self.root = self.data["projectTreeData"]["mainnProjectTreeInfo"]["rootProjectChildren"]
+        self.root = self.data["projectTreeData"]["mainProjectTreeInfo"]["rootProjectChildren"]
 
     def get_data(self):
         return self.session.post(self.URL["initialize"],
