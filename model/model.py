@@ -57,3 +57,7 @@ class UserInfo:
             return (True, result["sid"])
         else:
             return (False, False)
+
+    def get_root_content(self):
+        return [(node["nm"],node['id']) for node in self.root]
+

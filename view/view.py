@@ -1,19 +1,21 @@
+from view.keypress import key_mapping
 import curses
 import os
+
+
+class Node:
+    def __init__(self, node_id, name, depth=0):
+        self.node_id = node_id
+        self.name = name
+        self.depth = depth
+        self.closed = True
 
 
 class View:
     def __init__(self):
         self.log_file = os.path.expanduser("~/.log_from_wfcli")
-
-    def render_homescreen(self):
-        self.sc.border()
-        self.sc.addstr(2, 2, "This is the homescreen")
-
-    def log_input(self, to_log):
-        with open(self.log_file, "a+") as f:
-            f.write("{}".format(to_log))
-
+        self.id_under_cursor = None
+        self.displayed = []
 
     def send_command(self):
         try:
@@ -24,19 +26,50 @@ class View:
                 curses.start_color()
             except:
                 pass
-            self.sc.clear()
             self.sc.nodelay(True)
             self.render_homescreen()
             self.open = True
             while self.open:
-                try:
-                    keypress = self.sc.getkey()
-                except:
+                keypress = self.sc.getch()
+                if keypress < 0:
                     continue
-                self.log_input(keypress)
-                if keypress == "q":
-                    yield ("quit_app", {})
+                else:
+                    if keypress in key_mapping:
+                        result = key_mapping[keypress]
+                        yield (result[0], self.view_status)
+                    self.log_input(keypress)
         finally:
             curses.echo()
             curses.nocbreak()
             curses.endwin()
+
+    @property
+    def view_status(self):
+        return {"id_selected": self.id_under_cursor}
+
+    def print_message(self, message):
+        self.sc.addstr(1, 1, message)
+
+    def render_homescreen(self):
+        self.sc.clear()
+        self.sc.border()
+        self.print_message("This is WorkFlowy-CLI")
+        for height, line in enumerate(self.displayed):
+            indicator = "-" if line.closed else "v"
+            message = "{} {}".format(indicator, line.name)
+            self.sc.addstr(height + 2, (line.depth + 1) * 2, message)
+        self.sc.refresh()
+
+
+    def log_input(self, to_log):
+        with open(self.log_file, "a+") as f:
+            f.write("{}".format(to_log))
+
+    def display_root_content(self, content):
+        for node in content:
+            new_node = Node(node[1], node[0], 0)
+            self.displayed.append(new_node)
+        self.render_homescreen()
+
+    def nav_down(self, content):
+        pass
