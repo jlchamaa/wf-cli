@@ -26,5 +26,14 @@ class ViewModel:
     def warning(self, message):
         self.v.print_message(message)
 
+    def nav_left(self, content):
+        self.v.nav_left()
+
     def nav_right(self, content):
         self.v.nav_right()
+
+    def nav_up(self, content):
+        self.v.nav_up()
+
+    def nav_down(self, content):
+        self.v.nav_down()

@@ -14,7 +14,7 @@ class Node:
 class View:
     def __init__(self):
         self.log_file = os.path.expanduser("~/.log_from_wfcli")
-        self.id_under_cursor = None
+        self.cursor_index = 0
         self.displayed = []
 
     def send_command(self):
@@ -36,7 +36,7 @@ class View:
                 else:
                     if keypress in key_mapping:
                         result = key_mapping[keypress]
-                        yield (result[0], self.view_status)
+                        yield (result, self.view_status)
                     self.log_input(keypress)
         finally:
             curses.echo()
@@ -45,7 +45,11 @@ class View:
 
     @property
     def view_status(self):
-        return {"id_selected": self.id_under_cursor}
+        try:
+            id_under_cursor = self.displayed[self.cursor_index].node_id
+            return {"id_selected": id_under_cursor}
+        except IndexError:
+            return {"id_selected": None}
 
     def print_message(self, message):
         self.sc.addstr(1, 1, message)
@@ -57,9 +61,12 @@ class View:
         for height, line in enumerate(self.displayed):
             indicator = "-" if line.closed else "v"
             message = "{} {}".format(indicator, line.name)
-            self.sc.addstr(height + 2, (line.depth + 1) * 2, message)
+            attribute = curses.A_REVERSE if height == self.cursor_index else curses.A_NORMAL
+            self.sc.addstr(height + 2,
+                           (line.depth + 1) * 2,
+                           message,
+                           attribute)
         self.sc.refresh()
-
 
     def log_input(self, to_log):
         with open(self.log_file, "a+") as f:
@@ -71,5 +78,18 @@ class View:
             self.displayed.append(new_node)
         self.render_homescreen()
 
-    def nav_down(self, content):
+    def nav_left(self):
         pass
+
+    def nav_right(self):
+        pass
+
+    def nav_up(self):
+        if self.cursor_index > 0:
+            self.cursor_index -= 1
+            self.render_homescreen()
+
+    def nav_down(self):
+        if self.cursor_index < len(self.displayed) - 1:
+            self.cursor_index += 1
+            self.render_homescreen()
