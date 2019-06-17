@@ -30,8 +30,9 @@ class ViewModel:
         self.v.nav_left()
 
     def nav_right(self, content):
-        view_status = self.v.view_status
-        self.v.nav_right()
+        id_selected = self.v.view_status["id_selected"]
+        children = self.m.get_children(id_selected)
+        self.v.nav_right(children)
 
     def nav_up(self, content):
         self.v.nav_up()

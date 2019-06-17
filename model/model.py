@@ -26,10 +26,8 @@ class UserInfo:
         self.session = requests.Session()
         self.data = self.get_data()
         self.root = self.data["projectTreeData"]["mainProjectTreeInfo"]["rootProjectChildren"]
-        self.nodes = set()
+        self.nodes = {}
         [self.traverse_node(node) for node in self.root]
-        from pudb.remote import set_trace
-        set_trace(term_size=(200, 75))
 
     def traverse_node(self, node, parent=0):
         this_node = Node(node['id'], node['nm'], parent)
@@ -37,8 +35,11 @@ class UserInfo:
             for child in node['ch']:
                 self.traverse_node(child, node['id'])
                 this_node.children.append(child['id'])
-        self.nodes.add(this_node)
+        self.nodes[node['id']] = this_node
 
+    def get_children(self, parent_id):
+        parent_node = self.nodes[parent_id]
+        return [self.nodes[node_id] for node_id in parent_node.children]
         
     def get_data(self):
         return self.session.post(self.URL["initialize"],

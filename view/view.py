@@ -1,6 +1,8 @@
 from view.keypress import key_mapping
 import curses
+import logging
 import os
+log = logging.getLogger("wfcli")
 
 
 class Node:
@@ -82,8 +84,14 @@ class View:
     def nav_left(self):
         pass
 
-    def nav_right(self):
-        pass
+    def nav_right(self, children):
+        current_depth = id_under_cursor = self.displayed[self.cursor_index].depth
+        original_index = self.cursor_index
+        for child in children:
+            original_index += 1
+            new_node = Node(child.uuid, child.name, current_depth + 1)
+            self.displayed.insert(original_index, new_node)
+        self.render_homescreen()
 
     def nav_up(self):
         if self.cursor_index > 0:
