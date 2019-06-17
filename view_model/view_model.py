@@ -30,6 +30,7 @@ class ViewModel:
         self.v.nav_left()
 
     def nav_right(self, content):
+        view_status = self.v.view_status
         self.v.nav_right()
 
     def nav_up(self, content):

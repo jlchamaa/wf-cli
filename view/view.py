@@ -21,6 +21,7 @@ class View:
         try:
             self.sc = curses.initscr()
             curses.noecho()
+            curses.curs_set(False)
             curses.cbreak()
             try:
                 curses.start_color()
