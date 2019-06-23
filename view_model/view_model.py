@@ -1,10 +1,11 @@
-from model.model import UserInfo
+#from model.wf_account import UserInfo
+from model.file_based import UserFile
 from view.view import View
 from pdb import set_trace
 
 class ViewModel:
     def __init__(self):
-        self.m = UserInfo()
+        self.m = UserFile()
         self.v = View()
 
     def recieve_commands(self):
