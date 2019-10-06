@@ -15,7 +15,6 @@ class Node:
 
 class View:
     def __init__(self):
-        self.log_file = os.path.expanduser("~/.log_from_wfcli")
         self.cursor_index = 0
         self.displayed = []
 
@@ -40,7 +39,7 @@ class View:
                     if keypress in key_mapping:
                         result = key_mapping[keypress]
                         yield (result, self.view_status)
-                    self.log_input(keypress)
+                    log.info("KEYPRESS: {}".format(chr(keypress)))
         finally:
             curses.echo()
             curses.nocbreak()
@@ -70,10 +69,6 @@ class View:
                            message,
                            attribute)
         self.sc.refresh()
-
-    def log_input(self, to_log):
-        with open(self.log_file, "a+") as f:
-            f.write("{}".format(to_log))
 
     def display_root_content(self, content):
         for node in content:
