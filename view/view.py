@@ -77,10 +77,15 @@ class View:
         self.render_homescreen()
 
     def nav_left(self):
-        pass
+        original_depth = self.displayed[self.cursor_index].depth
+        original_index = self.cursor_index
+        current_index = original_index + 1
+        while current_index < len(self.displayed) and self.displayed[current_index].depth > original_depth:
+            del self.displayed[current_index]
+        self.render_homescreen()
 
     def nav_right(self, children):
-        current_depth = id_under_cursor = self.displayed[self.cursor_index].depth
+        current_depth = self.displayed[self.cursor_index].depth
         original_index = self.cursor_index
         for child in children:
             original_index += 1

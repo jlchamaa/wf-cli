@@ -9,10 +9,11 @@ from model.model_node import Node
 
 
 class UserFile:
+    DATA_FILE = os.path.expanduser("~/.cache/.wfclidata")
+
     def __init__(self):
-        self.data = self._load_data()
         self.nodes = {}
-        [self._traverse_node(node) for node in self.data]
+        self._load_data()
 
     def _traverse_node(self, node, parent=0):
         this_node = Node(node['id'], node['nm'], parent)
@@ -29,42 +30,24 @@ class UserFile:
     def get_root_content(self):
         return [(node["nm"],node['id']) for node in self.data]
 
+    @classmethod
+    def _data_file_exists(cls):
+        return os.path.exists(cls.DATA_FILE)
+
+    @classmethod
+    def _create_empty_data_file(cls):
+        os.makedirs(os.path.dirname(cls.DATA_FILE), exist_ok=True)
+        with open(cls.DATA_FILE, "x+") as f:
+            json.dump([], f)
+
     def _load_data(self):
-        return [
-                {"id": "1",
-                 "nm": "Name number 1",
-                 "ch":
-                    [
-                     { "id": "2",
-                       "nm": "Name number 2",
-                       "ch": []
-                     },
-                     { "id": "3",
-                       "nm": "Name number 3",
-                       "ch": []
-                     },
-                     { "id": "4",
-                       "nm": "Name number 4",
-                       "ch": []
-                     }
-                    ]
-                 },
-                {"id": "5",
-                 "nm": "Name number 1",
-                 "ch":
-                    [
-                     { "id": "6",
-                       "nm": "Name number 2",
-                       "ch": []
-                     },
-                     { "id": "7",
-                       "nm": "Name number 3",
-                       "ch": []
-                     },
-                     { "id": "8",
-                       "nm": "Name number 4",
-                       "ch": []
-                     }
-                    ]
-                 }
-                ]
+        if not self._data_file_exists():
+            self._create_empty_data_file()
+
+        with open(self.DATA_FILE) as f:
+            self.data = json.load(f)
+        for node in self.data:
+            self._traverse_node(node)
+
+    def save_data(self):
+        pass

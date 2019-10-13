@@ -24,6 +24,9 @@ class ViewModel:
         user_content = self.m.get_root_content()
         self.v.display_root_content(user_content)
 
+    def save_data(self, content):
+        self.m.save_data()
+
     def warning(self, message):
         self.v.print_message(message)
 
