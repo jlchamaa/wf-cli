@@ -1,7 +1,6 @@
 import curses
 key_mapping= {
     ord('q'): "quit_app",
-    ord('o'): "load_root_content", 
     ord('i'): "insert_item",
     ord('s'): "save_data",
     ord('k'): "nav_up", 

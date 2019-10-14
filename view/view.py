@@ -18,32 +18,35 @@ class View:
         self.cursor_index = 0
         self.displayed = []
 
-    def send_command(self):
+    def __enter__(self):
+        self.sc = curses.initscr()
+        curses.noecho()
+        curses.curs_set(False)
+        curses.cbreak()
         try:
-            self.sc = curses.initscr()
-            curses.noecho()
-            curses.curs_set(False)
-            curses.cbreak()
-            try:
-                curses.start_color()
-            except:
-                pass
-            self.sc.nodelay(True)
-            self.render_homescreen()
-            self.open = True
-            while self.open:
-                keypress = self.sc.getch()
-                if keypress < 0:
-                    continue
-                else:
-                    if keypress in key_mapping:
-                        result = key_mapping[keypress]
-                        yield (result, self.view_status)
-                    log.info("KEYPRESS: {}".format(chr(keypress)))
-        finally:
-            curses.echo()
-            curses.nocbreak()
-            curses.endwin()
+            curses.start_color()
+        except:
+            pass
+        self.sc.nodelay(True)
+        self.render_homescreen()
+        self.open = True
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        curses.echo()
+        curses.nocbreak()
+        curses.endwin()
+
+    def send_command(self):
+        while self.open:
+            keypress = self.sc.getch()
+            if keypress < 0:
+                continue
+            else:
+                if keypress in key_mapping:
+                    result = key_mapping[keypress]
+                    yield (result, self.view_status)
+                log.info("KEYPRESS: {}".format(chr(keypress)))
 
     @property
     def view_status(self):

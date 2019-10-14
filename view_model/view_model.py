@@ -6,7 +6,10 @@ from pdb import set_trace
 class ViewModel:
     def __init__(self):
         self.m = UserFile()
-        self.v = View()
+        with View() as v:
+            self.v = v
+            self.load_root_content()
+            self.recieve_commands()
 
     def recieve_commands(self):
         for command, content in self.v.send_command():

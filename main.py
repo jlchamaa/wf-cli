@@ -8,7 +8,6 @@ log.addHandler(logging.FileHandler("spam.log"))
 def main():
     log.info("Main loop entered")
     vm = ViewModel()
-    vm.recieve_commands()
 
 if __name__ == "__main__":
     main()
