@@ -5,18 +5,11 @@ import os
 log = logging.getLogger("wfcli")
 
 
-class Node:
-    def __init__(self, node_id, name, depth=0):
-        self.node_id = node_id
-        self.name = name
-        self.depth = depth
-        self.closed = True
-
-
 class View:
     def __init__(self):
         self.cursor_index = 0
         self.displayed = []
+        self.indicators = {"closed": ">", "open": "v", "item": "-"}
 
     def __enter__(self):
         self.sc = curses.initscr()
@@ -51,7 +44,7 @@ class View:
     @property
     def view_status(self):
         try:
-            id_under_cursor = self.displayed[self.cursor_index].node_id
+            id_under_cursor = self.content[self.cursor_index].uuid
             return {"id_selected": id_under_cursor}
         except IndexError:
             return {"id_selected": None}
@@ -59,25 +52,22 @@ class View:
     def print_message(self, message):
         self.sc.addstr(1, 1, message)
 
-    def render_homescreen(self):
+    def render_content(self, content):
+        self.displayed = []
+        self.content = content
+        for name, depth, state in content:
+            message = "{} {} {}".format("  "*depth, self.indicators[state], name)
+            self.displayed.append(message)
         self.sc.clear()
         self.sc.border()
         self.print_message("This is WorkFlowy-CLI")
         for height, line in enumerate(self.displayed):
-            indicator = "-" if line.closed else "v"
-            message = "{} {}".format(indicator, line.name)
             attribute = curses.A_REVERSE if height == self.cursor_index else curses.A_NORMAL
             self.sc.addstr(height + 2,
-                           (line.depth + 1) * 2,
-                           message,
+                           1,
+                           line,
                            attribute)
         self.sc.refresh()
-
-    def display_root_content(self, content):
-        for node in content:
-            new_node = Node(node[1], node[0], 0)
-            self.displayed.append(new_node)
-        self.render_homescreen()
 
     def nav_left(self):
         original_depth = self.displayed[self.cursor_index].depth

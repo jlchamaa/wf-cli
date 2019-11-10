@@ -13,22 +13,28 @@ class UserFile:
 
     def __init__(self):
         self.nodes = {}
+        self.root_content = [None] * 50
         self._load_data()
 
-    def _traverse_node(self, node, parent=0):
-        this_node = Node(node['id'], node['nm'], parent)
-        if 'ch' in node:
-            for child in node['ch']:
-                self._traverse_node(child, node['id'])
-                this_node.children.append(child['id'])
-        self.nodes[node['id']] = this_node
+    def _traverse_node(self, node, depth):
+        current_node = self.nodes[node]
+        state = current_node._get_state()
+        self.visible.append(current_node.uuid)
+        if not current_node.closed:
+            for child in current_node.children:
+                self._traverse_node(child, depth+1)
 
     def get_children(self, parent_id):
         parent_node = self.nodes[parent_id]
         return [self.nodes[node_id] for node_id in parent_node.children]
         
-    def get_root_content(self):
-        return [(node["nm"],node['id']) for node in self.data]
+    def load_visible(self):
+        self.visible = []
+        for node in self.root_content:
+            if node is not None:
+                self._traverse_node(node, 0)
+        return self.visible
+
 
     @classmethod
     def _data_file_exists(cls):
@@ -46,8 +52,10 @@ class UserFile:
 
         with open(self.DATA_FILE) as f:
             self.data = json.load(f)
-        for node in self.data:
-            self._traverse_node(node)
+            for node in self.data:
+                self.nodes[node["id"]] = Node(node["id"], node["nm"], node["cl"], node["rt"])
+                if node["rt"] >= 0:
+                    self.root_content[node["rt"]] = node["id"]
 
     def save_data(self):
         pass

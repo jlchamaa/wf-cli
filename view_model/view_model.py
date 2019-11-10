@@ -6,15 +6,12 @@ from pdb import set_trace
 class ViewModel:
     def __init__(self):
         self.m = UserFile()
-        with View() as v:
-            self.v = v
-            self.load_root_content()
+        with View() as self.v:
+            self.render()
             self.recieve_commands()
 
     def recieve_commands(self):
         for command, content in self.v.send_command():
-            #from pudb.remote import set_trace
-            #set_trace(term_size=(150, 70))
             try:
                 getattr(self, command)(content)
             except AttributeError:
@@ -23,9 +20,8 @@ class ViewModel:
     def quit_app(self, content=None):
         self.v.open = False 
 
-    def load_root_content(self, content={}):
-        user_content = self.m.get_root_content()
-        self.v.display_root_content(user_content)
+    def render(self, content={}):
+        self.v.render_content(self.m.load_visible())
 
     def save_data(self, content):
         self.m.save_data()
