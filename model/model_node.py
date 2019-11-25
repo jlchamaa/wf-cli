@@ -1,12 +1,28 @@
 class Node:
-    def __init__(self, uuid, name, closed, root=-1):
-        self.uuid = uuid
-        self.name = name
-        self.children = []
-        self.closed = closed
-        self.root = root  # negatives not root, positives list in order
+    def __init__(self, node_dict):
+        self.from_dictionary(node_dict)
 
-    def _get_state(self):
+    def from_dictionary(self, node_dict):
+        self.uuid = node_dict["id"]
+        self.name = node_dict["nm"]
+        self.parent = node_dict["pa"]
+        self.children = node_dict["ch"]
+        self.closed = node_dict["cl"]
+
+    def __str__(self):
+        return "{}: {}\n\tParent: {}\n\tChildren: {}".format(
+            self.uuid,
+            self.name,
+            self.parent,
+            self.children,
+        )
+
+    @property
+    def is_root(self):
+        return isinstance(self.parent, int)
+
+    @property
+    def state(self):
         if len(self.children) == 0:
             return "item"
         else:

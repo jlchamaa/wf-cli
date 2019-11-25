@@ -6,4 +6,10 @@ key_mapping= {
     ord('j'): "nav_down",
     ord('h'): "nav_left",
     ord('l'): "nav_right",
+    ord('p'): "print_data",
+
+    # TAB
+    9: "indent",
+    # SHIFT-TAB
+    (27, 91, 90): "unindent",
     }

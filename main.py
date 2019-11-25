@@ -3,7 +3,10 @@ import logging
 from view_model.view_model import ViewModel
 log = logging.getLogger("wfcli")
 log.setLevel(logging.DEBUG)
-log.addHandler(logging.FileHandler("spam.log"))
+fh = logging.FileHandler("spam.log")
+fh.setLevel(logging.DEBUG)
+log.addHandler(fh)
+
 
 def main():
     log.info("Main loop entered")
