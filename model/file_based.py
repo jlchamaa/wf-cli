@@ -10,10 +10,10 @@ from model.model_node import Node
 
 class UserFile:
     DATA_FILE = os.path.expanduser("~/.cache/.wfclidata")
+    root_node_id = "0"
 
     def __init__(self):
         self.nodes = {}
-        self.root_content = [None] * 50
         self.cursor_position = 0
         self._load_data()
 
@@ -33,7 +33,7 @@ class UserFile:
         returns a list of tuples like this ( name, depth, state)
         """
         self.visible = []
-        for node in self.root_content:
+        for node in self.nodes[self.root_node_id].children:
             if node is not None:
                 self._traverse_node(node, 0)
         return self.visible
@@ -43,8 +43,6 @@ class UserFile:
         for node_dict in data:
             node = Node(node_dict)
             self.nodes[node.uuid] = node
-            if node.is_root:
-                self.root_content[node.parent] = node.uuid
 
     @classmethod
     def _data_file_exists(cls):
@@ -82,16 +80,11 @@ class UserFile:
 
     def unlink_parent_child(self, parent, child):
         assert child in self.nodes
-        if self.nodes[child].is_root:
-            # parent is root, just remove from list
-            self.root_content.remove(child)
-        else:
-            #parent is a node, more work/verification is needed
-            assert parent in self.nodes
-            assert self.nodes[child].parent == parent
-            assert child in self.nodes[parent].children
-            self.nodes[parent].children.remove(child)
-            self.nodes[child].parent = None
+        assert parent in self.nodes
+        assert self.nodes[child].parent == parent
+        assert child in self.nodes[parent].children
+        self.nodes[parent].children.remove(child)
+        self.nodes[child].parent = None
 
     def link_parent_child(self, parent, child):
         self.nodes[child].parent = parent
@@ -102,19 +95,22 @@ class UserFile:
         self.link_parent_child(new_parent, child)
 
     def indent(self):
-        if self.cursor_position > 0:
-            # we have a neighbor above us
-            current_node, current_depth = self.visible[self.cursor_position]
-            neighbor_node, neighbor_depth = self.visible[self.cursor_position - 1]
-            if neighbor_depth == current_depth -1:  # above neighbor should be parent
-                assert current_node.uuid in neighbor_node.children
-                return "Cannot Indent"
-            if neighbor_depth == current_depth:  # above neighbor should be peer
-                self.unlink_relink(current_node.parent, current_node.uuid, neighbor_node.uuid) 
-                return "Can Indent"
+        current_node, current_depth = self.visible[self.cursor_position]
+        parent_node = current_node.parent
+        parents_child_list = self.nodes[parent_node].children
+        current_node_index = parents_child_list.index(current_node.uuid)
+        if current_node_index == 0:
+            return "top child"
         else:
-            #nobody above to compare with. Error
-            return "cursor 0"
+            new_parent = parents_child_list[current_node_index - 1]
+            self.unlink_relink(parent_node, current_node.uuid, new_parent)
+            return "Nailed it"
 
     def unindent(self):
-        pass
+        current_node, current_depth = self.visible[self.cursor_position]
+        parent_id = current_node.parent
+        if parent_id == self.root_node_id:
+            return "top level, no unindent"
+        else:
+            super_parent_id = self.nodes[parent_id].parent
+            self.unlink_relink(parent_id, current_node.uuid, super_parent_id)
