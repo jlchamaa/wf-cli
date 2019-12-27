@@ -5,6 +5,7 @@ import sys
 from lazy import lazy
 import requests
 import json
+from pudb.remote import set_trace
 from model.model_node import Node
 
 
@@ -40,8 +41,8 @@ class UserFile:
 
     def data_from_file_object(self, fo):
         data = json.load(fo)
-        for node_dict in data:
-            node = Node(node_dict)
+        for node_def in data:
+            node = Node(node_def=node_def)
             self.nodes[node.uuid] = node
 
     @classmethod
@@ -63,6 +64,12 @@ class UserFile:
 
     def save_data(self):
         pass
+
+    def create_node(self, parent, **kwargs):
+        node = Node(pa=parent, **kwargs)
+        self.nodes[node.uuid] = node
+        self.nodes[parent].children.append(node.uuid)
+        return node
 
     def nav_left(self):
         self.visible[self.cursor_position][0].closed = True

@@ -1,8 +1,8 @@
 #from model.wf_account import UserInfo
 import logging
+import time
 from model.file_based import UserFile
 from view.view import View
-from pdb import set_trace
 from pudb.remote import set_trace as pst
 
 
@@ -77,5 +77,23 @@ class ViewModel:
         self.render()
 
     def print_data(self, content):
+        log.info("Visible nodes\n=====")
         for node, depth in self.visible_nodes:
             log.info(node)
+        log.info("All nodes\n=====")
+        for key,value  in self.m.nodes.items():
+            log.info(value)
+
+    def open_below(self, content):
+        edit_mode = True
+        new_node = self.m.create_node("2", nm="Butterscotch")
+        while edit_mode:
+            self.render()
+            key_combo = self.v.get_keypress()
+            if len(key_combo) > 1:
+                edit_mode = False
+            else:
+                if key_combo[0] == 27:
+                    edit_mode = False
+                else:
+                    new_node.name += chr(key_combo[0])

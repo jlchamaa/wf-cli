@@ -29,8 +29,8 @@ class View:
         curses.nocbreak()
         curses.endwin()
 
-    def send_command(self):
-        while self.open:
+    def get_keypress(self):
+        while True:
             keypress = self.sc.getch()
             if keypress < 0:
                 continue
@@ -39,8 +39,15 @@ class View:
                 while keypress >= 0:
                     key_combo.append(keypress)
                     keypress = self.sc.getch()
-                keypress = tuple(key_combo)
-            log.info("KEYPRESS: {}".format(str(keypress)))
+            else:
+                key_combo = [keypress]
+            key_combo = tuple(key_combo)
+            log.info("KEYPRESS: {}".format(str(key_combo)))
+            return key_combo
+
+    def send_command(self):
+        while self.open:
+            keypress = self.get_keypress()
             if keypress in key_mapping:
                 result = key_mapping[keypress]
                 yield (result, self.view_status)
