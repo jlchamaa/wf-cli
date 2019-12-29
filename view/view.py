@@ -1,14 +1,22 @@
 from view.keypress import key_mapping
+from collections import namedtuple
 import curses
 import logging
 import os
 log = logging.getLogger("wfcli")
 
+Mode = namedtuple("Mode", "indicators note selection")
+NormalMode = Mode({"closed": ">", "open": "v", "item": "-"}, "Normal Mode", curses.A_REVERSE)
+EditMode = Mode({"closed": ">", "open": "v", "item": "-"}, "Edit Mode", curses.A_REVERSE)
+
 
 class View:
     def __init__(self):
-        self.displayed = []
-        self.indicators = {"closed": ">", "open": "v", "item": "-"}
+        self.mode = NormalMode
+        self.mode_map = {
+            "normal": NormalMode,
+            "edit": EditMode,
+        }
 
     def __enter__(self):
         self.sc = curses.initscr()
@@ -24,10 +32,16 @@ class View:
         self.open = True
         return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    def __exit__(self, *args):
         curses.echo()
         curses.nocbreak()
         curses.endwin()
+
+    def change_mode(self, mode):
+        if mode in self.mode_map:
+            self.mode = self.mode_map[mode]
+        else:
+            raise ValueError("There isn't a {} mode".format(mode))
 
     def get_keypress(self):
         while True:
@@ -65,15 +79,15 @@ class View:
         self.sc.addstr(1, 1, message)
 
     def render_content(self, content, cursor_position):
-        self.displayed = []
+        displayed = []
         for node, depth in content:
-            message = "{} {} {}".format("  "*depth, self.indicators[node.state], node.name)
-            self.displayed.append(message)
+            message = "{} {} {}".format("  "*depth, self.mode.indicators[node.state], node.name)
+            displayed.append(message)
         self.sc.clear()
         self.sc.border()
-        self.print_message("This is WorkFlowy-CLI")
-        for height, line in enumerate(self.displayed):
-            attribute = curses.A_REVERSE if height == cursor_position else curses.A_NORMAL
+        self.print_message(self.mode.note)
+        for height, line in enumerate(displayed):
+            attribute = self.mode.selection if height == cursor_position else curses.A_NORMAL
             self.sc.addstr(height + 2,
                            1,
                            line,

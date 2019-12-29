@@ -68,7 +68,6 @@ class UserFile:
     def create_node(self, parent, **kwargs):
         node = Node(pa=parent, **kwargs)
         self.nodes[node.uuid] = node
-        self.nodes[parent].children.append(node.uuid)
         return node
 
     def nav_left(self):
@@ -93,9 +92,9 @@ class UserFile:
         self.nodes[parent].children.remove(child)
         self.nodes[child].parent = None
 
-    def link_parent_child(self, parent, child):
+    def link_parent_child(self, parent, child, position=0):
         self.nodes[child].parent = parent
-        self.nodes[parent].children.append(child)
+        self.nodes[parent].children.insert(position, child)
 
     def unlink_relink(self, old_parent, child, new_parent):
         self.unlink_parent_child(old_parent, child)
@@ -121,3 +120,27 @@ class UserFile:
         else:
             super_parent_id = self.nodes[parent_id].parent
             self.unlink_relink(parent_id, current_node.uuid, super_parent_id)
+
+    def open_below(self):
+        current_node, current_depth = self.visible[self.cursor_position]
+        self.cursor_position += 1
+
+        if current_node.state == "open":
+            new_node = self.create_node(current_node.uuid)
+            self.link_parent_child(
+                current_node.uuid,
+                new_node.uuid,
+                position=0,
+            )
+            return new_node
+
+        else:  # new node is sibling of current node
+            parent_node = self.nodes[current_node.parent]
+            new_node = self.create_node(parent_node.uuid)
+            pos_in_parent_list = parent_node.children.index(current_node.uuid)
+            self.link_parent_child(
+                parent_node.uuid,
+                new_node.uuid,
+                position=pos_in_parent_list+1,
+            )
+            return new_node

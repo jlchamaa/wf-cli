@@ -86,7 +86,8 @@ class ViewModel:
 
     def open_below(self, content):
         edit_mode = True
-        new_node = self.m.create_node("2", nm="Butterscotch")
+        self.v.change_mode("edit")
+        new_node = self.m.open_below()
         while edit_mode:
             self.render()
             key_combo = self.v.get_keypress()
@@ -97,3 +98,5 @@ class ViewModel:
                     edit_mode = False
                 else:
                     new_node.name += chr(key_combo[0])
+        self.v.change_mode("normal")
+        self.render()
