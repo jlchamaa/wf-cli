@@ -17,6 +17,7 @@ class View:
             "normal": NormalMode,
             "edit": EditMode,
         }
+        self.active_message = None
 
     def __enter__(self):
         self.sc = curses.initscr()
@@ -76,7 +77,7 @@ class View:
         #     return {"id_selected": None}
 
     def print_message(self, message):
-        self.sc.addstr(1, 1, message)
+        self.active_message = message
 
     def render_content(self, content, cursor_position):
         displayed = []
@@ -85,7 +86,9 @@ class View:
             displayed.append(message)
         self.sc.clear()
         self.sc.border()
-        self.print_message(self.mode.note)
+        message = self.active_message if self.active_message is not None else self.mode.note
+        self.sc.addstr(1, 1, message)
+        self.active_message = None
         for height, line in enumerate(displayed):
             attribute = self.mode.selection if height == cursor_position else curses.A_NORMAL
             self.sc.addstr(height + 2,

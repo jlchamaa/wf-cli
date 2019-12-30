@@ -8,9 +8,7 @@ key_mapping= {
     (ord('l'),): "nav_right",
     (ord('p'),): "print_data",
     (ord('o'),): "open_below",
-
-    # TAB
-    (9,): "indent",
-    # SHIFT-TAB
-    (27, 91, 90): "unindent",
+    (10,): "open_below",      # ENTER
+    (9,): "indent",           # TAB
+    (27, 91, 90): "unindent", # SHIFT-TAB
     }

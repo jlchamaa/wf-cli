@@ -20,7 +20,7 @@ class ViewModel:
     def recieve_commands(self):
         for command, content in self.v.send_command():
             try:
-                getattr(self, command)(content)
+                getattr(self, command)(content=content)
             except AttributeError as ae:
                 log.error("Command: {}\nError:{}".format(command, ae))
                 self.warning("Illegal command {}".format(command))
@@ -34,7 +34,7 @@ class ViewModel:
             self.cursor_position,
         )
 
-    def save_data(self, content):
+    def save_data(self, content={}):
         self.m.save_data()
 
     @property
@@ -48,35 +48,35 @@ class ViewModel:
     def warning(self, message):
         self.v.print_message(message)
 
-    def indent(self, message):
+    def indent(self, content={}):
         message = self.m.indent()
         if message:
             self.warning(message)
         self.render()
 
-    def unindent(self, message):
+    def unindent(self, content={}):
         message = self.m.unindent()
         if message:
             self.warning(message)
         self.render()
 
-    def nav_left(self, content):
+    def nav_left(self, content={}):
         self.m.nav_left()
         self.render()
 
-    def nav_right(self, content):
+    def nav_right(self, content={}):
         self.m.nav_right()
         self.render()
 
-    def nav_up(self, content):
+    def nav_up(self, content={}):
         self.m.nav_up()
         self.render()
 
-    def nav_down(self, content):
+    def nav_down(self, content={}):
         self.m.nav_down()
         self.render()
 
-    def print_data(self, content):
+    def print_data(self, content={}):
         log.info("Visible nodes\n=====")
         for node, depth in self.visible_nodes:
             log.info(node)
@@ -84,7 +84,7 @@ class ViewModel:
         for key,value  in self.m.nodes.items():
             log.info(value)
 
-    def open_below(self, content):
+    def open_below(self, content={}):
         edit_mode = True
         self.v.change_mode("edit")
         new_node = self.m.open_below()
@@ -94,9 +94,14 @@ class ViewModel:
             if len(key_combo) > 1:
                 edit_mode = False
             else:
-                if key_combo[0] == 27:
+                if key_combo[0] == 27:  # ESC
                     edit_mode = False
-                else:
+                elif key_combo[0] == 127:  # BACKSPACE
+                    new_node.name = new_node.name[:-1]
+                elif key_combo[0] == 10:  # ENTER
+                    self.open_below()
+                    edit_mode = False
+                else:  # WRITABLE KEY
                     new_node.name += chr(key_combo[0])
         self.v.change_mode("normal")
         self.render()

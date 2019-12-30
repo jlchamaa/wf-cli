@@ -92,13 +92,16 @@ class UserFile:
         self.nodes[parent].children.remove(child)
         self.nodes[child].parent = None
 
-    def link_parent_child(self, parent, child, position=0):
+    def link_parent_child(self, parent, child, position=None):
         self.nodes[child].parent = parent
-        self.nodes[parent].children.insert(position, child)
+        if position is not None:
+            self.nodes[parent].children.insert(position, child)
+        else:
+            self.nodes[parent].children.append(child)
 
-    def unlink_relink(self, old_parent, child, new_parent):
+    def unlink_relink(self, old_parent, child, new_parent, position=None):
         self.unlink_parent_child(old_parent, child)
-        self.link_parent_child(new_parent, child)
+        self.link_parent_child(new_parent, child, position)
 
     def indent(self):
         current_node, current_depth = self.visible[self.cursor_position]
@@ -118,8 +121,15 @@ class UserFile:
         if parent_id == self.root_node_id:
             return "top level, no unindent"
         else:
-            super_parent_id = self.nodes[parent_id].parent
-            self.unlink_relink(parent_id, current_node.uuid, super_parent_id)
+            super_parent_node = self.nodes[self.nodes[parent_id].parent]
+            pos_in_parent_list = super_parent_node.children.index(parent_id)
+            self.unlink_relink(
+                parent_id,
+                current_node.uuid,
+                super_parent_node.uuid,
+                position=pos_in_parent_list+1,
+            )
+            return "nailed it"
 
     def open_below(self):
         current_node, current_depth = self.visible[self.cursor_position]
