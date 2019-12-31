@@ -105,3 +105,7 @@ class ViewModel:
                     new_node.name += chr(key_combo[0])
         self.v.change_mode("normal")
         self.render()
+
+    def complete(self, content={}):
+        self.m.complete()
+        self.render()

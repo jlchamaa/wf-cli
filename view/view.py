@@ -79,10 +79,23 @@ class View:
     def print_message(self, message):
         self.active_message = message
 
+    def generate_line(self, node, depth):
+        def strikethrough(text):
+            result = ''
+            for c in text:
+                result = result + c + '\u0336'
+            return result
+        label = strikethrough(node.name) if node.complete else node.name
+        return "{} {} {}".format(
+            "  "*depth,
+            self.mode.indicators[node.state],
+            label,
+        )
+
     def render_content(self, content, cursor_position):
         displayed = []
         for node, depth in content:
-            message = "{} {} {}".format("  "*depth, self.mode.indicators[node.state], node.name)
+            message = self.generate_line(node, depth)
             displayed.append(message)
         self.sc.clear()
         self.sc.border()
