@@ -49,11 +49,17 @@ class View:
             keypress = self.sc.getch()
             if keypress < 0:
                 continue
-            if keypress == 27:  # an ESCAPE code
+            elif keypress == 27:  # an ESCAPE code
                 key_combo = []
                 while keypress >= 0:
                     key_combo.append(keypress)
                     keypress = self.sc.getch()
+            elif keypress in [100]: # combo keys
+                key_combo = [keypress]
+                keypress = -1
+                while keypress < 0:
+                    keypress = self.sc.getch()
+                key_combo.append(keypress)
             else:
                 key_combo = [keypress]
             key_combo = tuple(key_combo)
@@ -70,11 +76,6 @@ class View:
     @property
     def view_status(self):
         return None
-        # try:
-        #     id_under_cursor = self.content[self.cursor_index].uuid
-        #     return {"id_selected": id_under_cursor}
-        # except IndexError:
-        #     return {"id_selected": None}
 
     def print_message(self, message):
         self.active_message = message

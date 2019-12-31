@@ -18,6 +18,10 @@ class UserFile:
         self.cursor_position = 0
         self._load_data()
 
+    @property
+    def current_node(self):
+        return self.visible[self.cursor_position][0]
+
     def _traverse_node(self, node, depth):
         current_node = self.nodes[node]
         self.visible.append((current_node, depth))
@@ -62,7 +66,10 @@ class UserFile:
         with open(self.DATA_FILE) as f:
             self.data_from_file_object(f)
 
-    def save_data(self):
+    def save(self):
+        pass
+
+    def commit(self):
         pass
 
     def create_node(self, parent, **kwargs):
@@ -104,7 +111,7 @@ class UserFile:
         self.link_parent_child(new_parent, child, position)
 
     def indent(self):
-        current_node = self.visible[self.cursor_position][0]
+        current_node = self.current_node
         parent_node = current_node.parent
         parents_child_list = self.nodes[parent_node].children
         current_node_index = parents_child_list.index(current_node.uuid)
@@ -116,7 +123,7 @@ class UserFile:
             return "Nailed it"
 
     def unindent(self):
-        current_node = self.visible[self.cursor_position][0]
+        current_node = self.current_node
         parent_id = current_node.parent
         if parent_id == self.root_node_id:
             return "top level, no unindent"
@@ -132,7 +139,7 @@ class UserFile:
             return "nailed it"
 
     def open_below(self):
-        current_node = self.visible[self.cursor_position][0]
+        current_node = self.current_node
         self.cursor_position += 1
 
         if current_node.state == "open":
@@ -156,5 +163,25 @@ class UserFile:
             return new_node
 
     def complete(self):
-        current_node = self.visible[self.cursor_position][0]
+        current_node = self.current_node
         current_node.complete = not current_node.complete
+
+    def delete_item(self, node_id=None):
+        current_node = self.current_node if node_id is None else self.nodes[node_id]
+        for child_id in current_node.children[:]:
+            self.delete_item(node_id=child_id)
+        parent_id = current_node.parent
+        self.nodes[parent_id].children.remove(current_node.uuid)
+        del self.nodes[current_node.uuid]
+        if node_id is None:  # this is our top-level delete
+            self.cursor_position = max(0, self.cursor_position-1)
+            if len(self.nodes[self.root_node_id].children) == 0:
+                new_node = self.create_node(
+                    self.root_node_id,
+                    nm="Ooops, you deleted the last item on the list",
+                )
+                self.link_parent_child(
+                    self.root_node_id,
+                    new_node.uuid,
+                    position=0,
+                )

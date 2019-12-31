@@ -1,4 +1,5 @@
 key_mapping= {
+    (ord('d'),ord('d')): "delete_item",
     (ord('c'),): "complete",
     (ord('i'),): "edit_item",
     (ord('k'),): "nav_up",

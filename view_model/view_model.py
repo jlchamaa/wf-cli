@@ -27,6 +27,7 @@ class ViewModel:
 
     def quit_app(self, content=None):
         self.v.open = False 
+        log.error("Closing App Legitimately")
 
     def render(self, content={}):
         self.v.render_content(
@@ -34,8 +35,15 @@ class ViewModel:
             self.cursor_position,
         )
 
+    def commit_data(self, content={}):
+        self.m.commit()
+
     def save_data(self, content={}):
-        self.m.save_data()
+        self.m.save()
+
+    def commit_and_save_data(self, content={}):
+        self.commit_data()
+        self.save_data()
 
     @property
     def visible_nodes(self):
@@ -49,31 +57,45 @@ class ViewModel:
         self.v.print_message(message)
 
     def indent(self, content={}):
+        log.info("Indent invoked in ViewModel")
         message = self.m.indent()
         if message:
             self.warning(message)
+        self.commit_and_save_data()
         self.render()
+        log.info("Indent completed in ViewModel")
 
     def unindent(self, content={}):
+        log.info("Unindent invoked in ViewModel")
         message = self.m.unindent()
         if message:
             self.warning(message)
+        self.commit_and_save_data()
         self.render()
+        log.info("Unindent completed in ViewModel")
 
     def nav_left(self, content={}):
+        log.info("Nav_left invoked in ViewModel")
         self.m.nav_left()
+        self.commit_and_save_data()
         self.render()
+        log.info("Nav_left completed in ViewModel")
 
     def nav_right(self, content={}):
+        log.info("Nav_right invoked in ViewModel")
         self.m.nav_right()
+        self.commit_and_save_data()
         self.render()
+        log.info("Nav_right completed in ViewModel")
 
     def nav_up(self, content={}):
         self.m.nav_up()
+        self.commit_and_save_data()
         self.render()
 
     def nav_down(self, content={}):
         self.m.nav_down()
+        self.commit_and_save_data()
         self.render()
 
     def print_data(self, content={}):
@@ -104,8 +126,15 @@ class ViewModel:
                 else:  # WRITABLE KEY
                     new_node.name += chr(key_combo[0])
         self.v.change_mode("normal")
+        self.save_data()
         self.render()
 
     def complete(self, content={}):
         self.m.complete()
+        self.save_data()
+        self.render()
+
+    def delete_item(self, content={}):
+        self.m.delete_item()
+        self.save_data()
         self.render()
