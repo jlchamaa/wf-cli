@@ -12,10 +12,15 @@ log = logging.getLogger("wfcli")
 class ViewModel:
     def __init__(self):
         self.m = UserFile()
-        with View() as self.v:
-            self.render()
-            # pst(term_size=(300,80))
-            self.recieve_commands()
+        self.open_depth = 0
+        try:
+            with View() as self.v:
+                self.render()
+                # pst(term_size=(300,80))
+                self.recieve_commands()
+        except BaseException as be:
+            log.error("Exception {} raised.  Shut down".format(be))
+            raise be
 
     def recieve_commands(self):
         for command, content in self.v.send_command():
@@ -40,6 +45,7 @@ class ViewModel:
 
     def save_data(self, content={}):
         self.m.save()
+        log.info("saved")
 
     def commit_and_save_data(self, content={}):
         self.commit_data()
@@ -90,12 +96,12 @@ class ViewModel:
 
     def nav_up(self, content={}):
         self.m.nav_up()
-        self.commit_and_save_data()
+        self.save_data()
         self.render()
 
     def nav_down(self, content={}):
         self.m.nav_down()
-        self.commit_and_save_data()
+        self.save_data()
         self.render()
 
     def print_data(self, content={}):
@@ -121,7 +127,9 @@ class ViewModel:
                 elif key_combo[0] == 127:  # BACKSPACE
                     new_node.name = new_node.name[:-1]
                 elif key_combo[0] == 10:  # ENTER
+                    self.open_depth += 1
                     self.open_below()
+                    self.open_depth -= 1
                     edit_mode = False
                 else:  # WRITABLE KEY
                     new_node.name += chr(key_combo[0])
@@ -131,10 +139,13 @@ class ViewModel:
 
     def complete(self, content={}):
         self.m.complete()
-        self.save_data()
+        self.commit_and_save_data()
         self.render()
 
     def delete_item(self, content={}):
         self.m.delete_item()
-        self.save_data()
+        self.commit_and_save_data()
         self.render()
+
+    def undo(self, content={}):
+        pass

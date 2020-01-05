@@ -10,6 +10,7 @@ key_mapping= {
     (ord('p'),): "print_data",
     (ord('q'),): "quit_app",
     (ord('s'),): "save_data",
+    (ord('u'),): "undo",
     (9,): "indent",           # TAB
     (10,): "open_below",      # ENTER
     (27, 91, 90): "unindent", # SHIFT-TAB

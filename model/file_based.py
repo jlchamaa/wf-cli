@@ -1,12 +1,11 @@
 #!/usr/bin/env python3
-import os
-import pickle
-import sys
-from lazy import lazy
-import requests
 import json
+import os
+import sys
 from pudb.remote import set_trace
 from model.model_node import Node
+from model.history import History
+from model.node_store import NodeStore
 
 
 class UserFile:
@@ -14,7 +13,8 @@ class UserFile:
     root_node_id = "0"
 
     def __init__(self):
-        self.nodes = {}
+        self.nds = NodeStore()
+        self.history = History()
         self.cursor_position = 0
         self._load_data()
 
@@ -23,22 +23,22 @@ class UserFile:
         return self.visible[self.cursor_position][0]
 
     def _traverse_node(self, node, depth):
-        current_node = self.nodes[node]
+        current_node = self.nds.get_node(node)
         self.visible.append((current_node, depth))
         if not current_node.closed:
             for child in current_node.children:
                 self._traverse_node(child, depth+1)
 
     def get_children(self, parent_id):
-        parent_node = self.nodes[parent_id]
-        return [self.nodes[node_id] for node_id in parent_node.children]
+        parent_node = self.nds.get_node(parent_id)
+        return [self.nds.get_node(node_id) for node_id in parent_node.children]
         
     def load_visible(self):
         """
         returns a list of tuples like this ( name, depth, state)
         """
         self.visible = []
-        for node in self.nodes[self.root_node_id].children:
+        for node in self.nds.get_node(self.root_node_id).children:
             if node is not None:
                 self._traverse_node(node, 0)
         return self.visible
@@ -47,7 +47,7 @@ class UserFile:
         data = json.load(fo)
         for node_def in data:
             node = Node(node_def=node_def)
-            self.nodes[node.uuid] = node
+            self.nds.add_node(node)
 
     @classmethod
     def _data_file_exists(cls):
@@ -70,11 +70,11 @@ class UserFile:
         pass
 
     def commit(self):
-        pass
+        self.history.add(self.nds, self.cursor_position)
 
     def create_node(self, parent, **kwargs):
         node = Node(pa=parent, **kwargs)
-        self.nodes[node.uuid] = node
+        self.nds.add_node(node)
         return node
 
     def nav_left(self):
@@ -92,19 +92,19 @@ class UserFile:
             self.cursor_position += 1
 
     def unlink_parent_child(self, parent, child):
-        assert child in self.nodes
-        assert parent in self.nodes
-        assert self.nodes[child].parent == parent
-        assert child in self.nodes[parent].children
-        self.nodes[parent].children.remove(child)
-        self.nodes[child].parent = None
+        assert child in self.nds
+        assert parent in self.nds
+        assert self.nds.get_node(child).parent == parent
+        assert child in self.nds.get_node(parent).children
+        self.nds.get_node(parent).children.remove(child)
+        self.nds.get_node(child).parent = None
 
     def link_parent_child(self, parent, child, position=None):
-        self.nodes[child].parent = parent
+        self.nds.get_node(child).parent = parent
         if position is not None:
-            self.nodes[parent].children.insert(position, child)
+            self.nds.get_node(parent).children.insert(position, child)
         else:
-            self.nodes[parent].children.append(child)
+            self.nds.get_node(parent).children.append(child)
 
     def unlink_relink(self, old_parent, child, new_parent, position=None):
         self.unlink_parent_child(old_parent, child)
@@ -113,7 +113,7 @@ class UserFile:
     def indent(self):
         current_node = self.current_node
         parent_node = current_node.parent
-        parents_child_list = self.nodes[parent_node].children
+        parents_child_list = self.nds.get_node(parent_node).children
         current_node_index = parents_child_list.index(current_node.uuid)
         if current_node_index == 0:
             return "top child"
@@ -128,7 +128,7 @@ class UserFile:
         if parent_id == self.root_node_id:
             return "top level, no unindent"
         else:
-            super_parent_node = self.nodes[self.nodes[parent_id].parent]
+            super_parent_node = self.nds.get_node(self.nds.get_node(parent_id).parent)
             pos_in_parent_list = super_parent_node.children.index(parent_id)
             self.unlink_relink(
                 parent_id,
@@ -152,7 +152,7 @@ class UserFile:
             return new_node
 
         else:  # new node is sibling of current node
-            parent_node = self.nodes[current_node.parent]
+            parent_node = self.nds.get_node(current_node.parent)
             new_node = self.create_node(parent_node.uuid)
             pos_in_parent_list = parent_node.children.index(current_node.uuid)
             self.link_parent_child(
@@ -167,15 +167,15 @@ class UserFile:
         current_node.complete = not current_node.complete
 
     def delete_item(self, node_id=None):
-        current_node = self.current_node if node_id is None else self.nodes[node_id]
+        current_node = self.current_node if node_id is None else self.nds.get_node(node_id)
         for child_id in current_node.children[:]:
             self.delete_item(node_id=child_id)
         parent_id = current_node.parent
-        self.nodes[parent_id].children.remove(current_node.uuid)
-        del self.nodes[current_node.uuid]
+        self.nds.get_node(parent_id).children.remove(current_node.uuid)
+        del self.nds[current_node.uuid]
         if node_id is None:  # this is our top-level delete
             self.cursor_position = max(0, self.cursor_position-1)
-            if len(self.nodes[self.root_node_id].children) == 0:
+            if len(self.nds.get_node(self.root_node_id).children) == 0:
                 new_node = self.create_node(
                     self.root_node_id,
                     nm="Ooops, you deleted the last item on the list",
