@@ -1,0 +1,5 @@
+from this directory, run
+
+python -m unittest
+
+to run all unit-tests

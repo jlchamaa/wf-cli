@@ -10,11 +10,6 @@ class Node:
         self.closed = node_def.get("cl", False)
         self.complete = node_def.get("cp", False)
 
-        if "parent" not in self.__dict__ or self.parent is False:
-            raise ValueError("Parent needs to be set during instantiation")
-        if "uuid" not in self.__dict__ or self.parent is False:
-            raise ValueError("UUID needs to be set during instantiation")
-
 
     def __str__(self):
         return "{}: {}\n\tParent: {}\n\tChildren: {}".format(

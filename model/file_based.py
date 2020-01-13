@@ -2,7 +2,6 @@
 import json
 import os
 import sys
-from pudb.remote import set_trace
 from model.model_node import Node
 from model.history import History
 from model.node_store import NodeStore
@@ -20,7 +19,7 @@ class UserFile:
 
     @property
     def current_node(self):
-        return self.visible[self.cursor_position][0]
+        return self.load_visible()[self.cursor_position][0]
 
     def _traverse_node(self, node, depth):
         current_node = self.nds.get_node(node)

@@ -17,5 +17,8 @@ class NodeStore:
     def __delitem__(self, item):
         del self.nodes[item]
 
+    def __len__(self):
+        return len(self.nodes)
+
     def digest(self):
         return "123"
