@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
 import json
+import logging
 import os
-import sys
 from model.model_node import Node
 from model.history import History
 from model.node_store import NodeStore
+
+log = logging.getLogger("wfcli")
 
 
 class UserFile:
@@ -26,15 +28,15 @@ class UserFile:
         self.visible.append((current_node, depth))
         if not current_node.closed:
             for child in current_node.children:
-                self._traverse_node(child, depth+1)
+                self._traverse_node(child, depth + 1)
 
     def get_children(self, parent_id):
         parent_node = self.nds.get_node(parent_id)
         return [self.nds.get_node(node_id) for node_id in parent_node.children]
-        
+
     def load_visible(self):
         """
-        returns a list of tuples like this ( name, depth, state)
+        returns a list of tuples like this ( node, depth,)
         """
         self.visible = []
         for node in self.nds.get_node(self.root_node_id).children:
@@ -90,6 +92,8 @@ class UserFile:
         if self.cursor_position < len(self.visible) - 1:
             self.cursor_position += 1
 
+    # IDEA: make the unlink and relink methods live inside
+    # of the unlink_relink method?
     def unlink_parent_child(self, parent, child):
         assert child in self.nds
         assert parent in self.nds
@@ -115,17 +119,17 @@ class UserFile:
         parents_child_list = self.nds.get_node(parent_node).children
         current_node_index = parents_child_list.index(current_node.uuid)
         if current_node_index == 0:
-            return "top child"
+            log.info("indent of top child")
         else:
             new_parent = parents_child_list[current_node_index - 1]
             self.unlink_relink(parent_node, current_node.uuid, new_parent)
-            return "Nailed it"
+            log.info("Nailed it")
 
     def unindent(self):
         current_node = self.current_node
         parent_id = current_node.parent
         if parent_id == self.root_node_id:
-            return "top level, no unindent"
+            log.info("top level, no unindent")
         else:
             super_parent_node = self.nds.get_node(self.nds.get_node(parent_id).parent)
             pos_in_parent_list = super_parent_node.children.index(parent_id)
@@ -133,9 +137,9 @@ class UserFile:
                 parent_id,
                 current_node.uuid,
                 super_parent_node.uuid,
-                position=pos_in_parent_list+1,
+                position=pos_in_parent_list + 1,
             )
-            return "nailed it"
+            log.info("nailed it")
 
     def open_below(self):
         current_node = self.current_node
@@ -157,7 +161,7 @@ class UserFile:
             self.link_parent_child(
                 parent_node.uuid,
                 new_node.uuid,
-                position=pos_in_parent_list+1,
+                position=pos_in_parent_list + 1,
             )
             return new_node
 
@@ -173,7 +177,7 @@ class UserFile:
         self.nds.get_node(parent_id).children.remove(current_node.uuid)
         del self.nds[current_node.uuid]
         if node_id is None:  # this is our top-level delete
-            self.cursor_position = max(0, self.cursor_position-1)
+            self.cursor_position = max(0, self.cursor_position - 1)
             if len(self.nds.get_node(self.root_node_id).children) == 0:
                 new_node = self.create_node(
                     self.root_node_id,

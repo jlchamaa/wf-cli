@@ -64,18 +64,14 @@ class ViewModel:
 
     def indent(self, content={}):
         log.info("Indent invoked in ViewModel")
-        message = self.m.indent()
-        if message:
-            self.warning(message)
+        self.m.indent()
         self.commit_and_save_data()
         self.render()
         log.info("Indent completed in ViewModel")
 
     def unindent(self, content={}):
         log.info("Unindent invoked in ViewModel")
-        message = self.m.unindent()
-        if message:
-            self.warning(message)
+        self.m.unindent()
         self.commit_and_save_data()
         self.render()
         log.info("Unindent completed in ViewModel")

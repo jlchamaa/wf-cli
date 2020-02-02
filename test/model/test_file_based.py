@@ -15,11 +15,11 @@ class Test_UserFile(unittest.TestCase):
         mocked_load_data.assert_called_once()
         self.assertEqual(0, len(self.uf.nds))
         test_data = [
-            {"id": "0","nm": "root","cl": False,"ch": ["1","2"],"pa": None},
-            {"id": "1","nm": "henlo","cl": False,"ch": [],"pa": "0"},
-            {"id": "2","nm": "goodbye","cl": False,"ch": ["3", "4"],"pa": "0"},
-            {"id": "3","nm": "sayonara","cl": False,"ch": [],"pa": "2"},
-            {"id": "4","nm": "nice","cl": False,"ch": [],"pa": "2"}
+            {"id": "0", "nm": "root", "cl": False, "ch": ["1", "2"], "pa": None},
+            {"id": "1", "nm": "henlo", "cl": False, "ch": [], "pa": "0"},
+            {"id": "2", "nm": "goodbye", "cl": False, "ch": ["3", "4"], "pa": "0"},
+            {"id": "3", "nm": "sayonara", "cl": False, "ch": [], "pa": "2"},
+            {"id": "4", "nm": "nice", "cl": False, "ch": [], "pa": "2"}
         ]
         nds = NodeStore()
         for node_def in test_data:
@@ -29,6 +29,132 @@ class Test_UserFile(unittest.TestCase):
 
     def test_current_node(self):
         self.assertEqual(self.uf.current_node.uuid, "1")
+
+    def test_traverse_small(self):
+        self.uf.visible = []
+        self.uf._traverse_node("2", 0)
+        self.assertEqual(len(self.uf.visible), 3)
+
+    def test_traverse_single(self):
+        self.uf.visible = []
+        self.uf._traverse_node("4", 0)
+        self.assertEqual(len(self.uf.visible), 1)
+
+    def test_get_children(self):
+        children = self.uf.get_children("0")
+        self.assertListEqual([child.uuid for child in children], ["1", "2"])
+
+    def test_get_no_children(self):
+        children = self.uf.get_children("4")
+        self.assertListEqual(children, [])
+
+    def test_create_node(self):
+        node = self.uf.create_node("parent")
+        self.assertIs(node, self.uf.nds.get_node(node.uuid))
+
+    def test_close_open_item(self):
+        self.uf.load_visible()
+        self.assertEqual(len(self.uf.visible), 4)
+        self.uf.cursor_position = 1
+        self.uf.nav_left()
+        self.uf.load_visible()
+        self.assertEqual(len(self.uf.visible), 2)
+
+    def test_close_open_compound_item(self):
+        self.uf.nds.add_node(Node({"id": "5", "nm": "fifth", "pa": "4"}))
+        self.uf.nds.get_node("4").children.append("5")
+        self.uf.load_visible()
+        self.assertEqual(len(self.uf.visible), 5)
+        self.uf.cursor_position = 1
+        self.uf.nav_left()
+        self.uf.load_visible()
+        self.assertEqual(len(self.uf.visible), 2)
+
+    def test_close_closed_item(self):
+        self.uf.nds.get_node("2").closed = True
+        self.uf.load_visible()
+        self.assertEqual(len(self.uf.visible), 2)
+        self.uf.cursor_position = 1
+        self.uf.nav_left()
+        self.uf.load_visible()
+        self.assertEqual(len(self.uf.visible), 2)
+
+    def test_close_leaf_item(self):
+        self.uf.load_visible()
+        self.assertEqual(len(self.uf.visible), 4)
+        self.uf.cursor_position = 0
+        self.uf.nav_left()
+        self.uf.load_visible()
+        self.assertEqual(len(self.uf.visible), 4)
+
+    def test_open_closed_item(self):
+        self.uf.nds.get_node("2").closed = True
+        self.uf.load_visible()
+        self.assertEqual(len(self.uf.visible), 2)
+        self.uf.cursor_position = 1
+        self.uf.nav_right()
+        self.uf.load_visible()
+        self.assertEqual(len(self.uf.visible), 4)
+
+    def test_open_open_item(self):
+        self.uf.load_visible()
+        self.assertEqual(len(self.uf.visible), 4)
+        self.assertFalse(self.uf.nds.get_node("2").closed)
+        self.uf.cursor_position = 1
+        self.uf.nav_right()
+        self.uf.load_visible()
+        self.assertEqual(len(self.uf.visible), 4)
+
+    def test_open_compound_closed_open_item(self):
+        # cursor is closed, but children are open
+        self.uf.nds.add_node(Node({"id": "5", "nm": "fifth", "pa": "4"}))
+        self.uf.nds.get_node("4").children.append("5")
+        self.uf.nds.get_node("2").closed = True
+        self.uf.load_visible()
+        self.assertEqual(len(self.uf.visible), 2)
+        self.uf.cursor_position = 1
+        self.uf.nav_right()
+        self.uf.load_visible()
+        self.assertEqual(len(self.uf.visible), 5)
+
+    def test_open_compound_closed_closed_item(self):
+        # cursor is closed, but children are also closed
+        # should only open up the main, not the children
+        self.uf.nds.add_node(Node({"id": "5", "nm": "fifth", "pa": "4"}))
+        self.uf.nds.get_node("4").children.append("5")
+        self.uf.load_visible()
+        self.assertEqual(len(self.uf.visible), 5)
+        self.uf.nds.get_node("2").closed = True
+        self.uf.nds.get_node("4").closed = True
+        self.uf.load_visible()
+        self.assertEqual(len(self.uf.visible), 2)
+        self.uf.cursor_position = 1
+        self.uf.nav_right()
+        self.uf.load_visible()
+        self.assertEqual(len(self.uf.visible), 4)
+
+    def test_open_compound_closed_item(self):
+        # cursor is closed, but children are open
+        self.uf.nds.add_node(Node({"id": "5", "nm": "fifth", "pa": "4"}))
+        self.uf.nds.get_node("4").children.append("5")
+        self.uf.nds.get_node("2").closed = True
+        self.uf.load_visible()
+        self.assertEqual(len(self.uf.visible), 2)
+        self.uf.cursor_position = 1
+        self.uf.nav_right()
+        self.uf.load_visible()
+        self.assertEqual(len(self.uf.visible), 5)
+
+    def test_open_leaf_item(self):
+        self.uf.load_visible()
+        self.assertEqual(len(self.uf.visible), 4)
+        self.uf.cursor_position = 0
+        self.uf.nav_right()
+        self.uf.load_visible()
+        self.assertEqual(len(self.uf.visible), 4)
+
+    def test_indent(self):
+        pass
 
 
 if __name__ == "__main__":
