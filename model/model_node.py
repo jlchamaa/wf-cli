@@ -1,4 +1,6 @@
 import uuid
+
+
 class Node:
     def __init__(self, node_def=None, **kwargs):
         if node_def is None:
@@ -9,7 +11,6 @@ class Node:
         self.children = node_def.get("ch", [])
         self.closed = node_def.get("cl", False)
         self.complete = node_def.get("cp", False)
-
 
     def __str__(self):
         return "{}: {}\n\tParent: {}\n\tChildren: {}".format(

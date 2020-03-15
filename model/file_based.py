@@ -55,10 +55,18 @@ class UserFile:
         return os.path.exists(cls.DATA_FILE)
 
     @classmethod
-    def _create_empty_data_file(cls):
+    def _write_data_file(cls, data_obj):
         os.makedirs(os.path.dirname(cls.DATA_FILE), exist_ok=True)
         with open(cls.DATA_FILE, "x+") as f:
-            json.dump([], f)
+            json.dump(data_obj, f)
+
+    @classmethod
+    def _create_empty_data_file(cls):
+        empty_data = [
+            {"id": cls.root_node_id, "pa": None, "ch": ["1"]},
+            {"pa": cls.root_node_id, "id": "1", "nm": "Write down your thoughts"},
+        ]
+        cls._write_data_file(empty_data)
 
     def _load_data(self):
         if not self._data_file_exists():

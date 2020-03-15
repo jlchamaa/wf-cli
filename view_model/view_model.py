@@ -1,9 +1,6 @@
-#from model.wf_account import UserInfo
 import logging
-import time
 from model.file_based import UserFile
 from view.view import View
-from pudb.remote import set_trace as pst
 
 
 log = logging.getLogger("wfcli")
@@ -16,7 +13,6 @@ class ViewModel:
         try:
             with View() as self.v:
                 self.render()
-                # pst(term_size=(300,80))
                 self.recieve_commands()
         except BaseException as be:
             log.error("Exception {} raised.  Shut down".format(be))
@@ -31,7 +27,7 @@ class ViewModel:
                 self.warning("Illegal command {}".format(command))
 
     def quit_app(self, content=None):
-        self.v.open = False 
+        self.v.open = False
         log.error("Closing App Legitimately")
 
     def render(self, content={}):
@@ -105,7 +101,7 @@ class ViewModel:
         for node, depth in self.visible_nodes:
             log.info(node)
         log.info("All nodes\n=====")
-        for key,value  in self.m.nodes.items():
+        for key, value in self.m.nodes.items():
             log.info(value)
 
     def open_below(self, content={}):
@@ -114,7 +110,7 @@ class ViewModel:
         new_node = self.m.open_below()
         while edit_mode:
             self.render()
-            key_combo = self.v.get_keypress()
+            key_combo = self.v.mode.get_keypress()
             if len(key_combo) > 1:
                 edit_mode = False
             else:

@@ -1,22 +1,11 @@
-from view.keypress import key_mapping
-from collections import namedtuple
+from view.modes import NormalMode, EditMode
 import curses
 import logging
-import os
 log = logging.getLogger("wfcli")
-
-Mode = namedtuple("Mode", "indicators note selection")
-NormalMode = Mode({"closed": ">", "open": "v", "item": "-"}, "Normal Mode", curses.A_REVERSE)
-EditMode = Mode({"closed": ">", "open": "v", "item": "-"}, "Edit Mode", curses.A_REVERSE)
 
 
 class View:
     def __init__(self):
-        self.mode = NormalMode
-        self.mode_map = {
-            "normal": NormalMode,
-            "edit": EditMode,
-        }
         self.active_message = None
 
     def __enter__(self):
@@ -24,13 +13,18 @@ class View:
         curses.noecho()
         curses.curs_set(False)
         curses.cbreak()
-        try:
-            curses.start_color()
-        except:
-            pass
+        # try:
+        #     curses.start_color()
+        # except :
+        #     pass
         self.sc.nodelay(True)
-        self.render_content([], 0)
         self.open = True
+        self.mode_map = {
+            "normal": NormalMode(self.sc),
+            "edit": EditMode(self.sc),
+        }
+        self.change_mode("normal")
+        self.render_content([], 0)
         return self
 
     def __exit__(self, *args):
@@ -44,34 +38,9 @@ class View:
         else:
             raise ValueError("There isn't a {} mode".format(mode))
 
-    def get_keypress(self):
-        while True:
-            keypress = self.sc.getch()
-            if keypress < 0:
-                continue
-            elif keypress == 27:  # an ESCAPE code
-                key_combo = []
-                while keypress >= 0:
-                    key_combo.append(keypress)
-                    keypress = self.sc.getch()
-            elif keypress in [100]: # combo keys
-                key_combo = [keypress]
-                keypress = -1
-                while keypress < 0:
-                    keypress = self.sc.getch()
-                key_combo.append(keypress)
-            else:
-                key_combo = [keypress]
-            key_combo = tuple(key_combo)
-            log.info("KEYPRESS: {}".format(str(key_combo)))
-            return key_combo
-
     def send_command(self):
         while self.open:
-            keypress = self.get_keypress()
-            if keypress in key_mapping:
-                result = key_mapping[keypress]
-                yield (result, self.view_status)
+            yield self.mode.get_command()
 
     @property
     def view_status(self):
