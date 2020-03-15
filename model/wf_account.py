@@ -2,7 +2,6 @@
 import os
 import pickle
 import sys
-from lazy import lazy
 import requests
 import json
 from model.model_node import Node
@@ -38,7 +37,6 @@ class UserInfo:
         return self.session.post(self.URL["initialize"],
                                  cookies=self._session_cookies).json()
 
-    @lazy
     def _session_cookies(self):
         cookie_path = os.path.expanduser(self.COOKIE_FILE)
         if os.path.exists(cookie_path):
@@ -70,7 +68,6 @@ class UserInfo:
     def get_root_content(self):
         return [(node["nm"],node['id']) for node in self.root]
 
-    @lazy
     def _get_credentials(self):
         data = None
         rc_path = os.path.expanduser(self.CONFIG_FILE)
