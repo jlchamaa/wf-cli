@@ -1,5 +1,7 @@
 import curses
+import logging
 from view.keypress import key_mapping
+log = logging.getLogger("wfcli")
 
 
 class NormalMode:
@@ -40,7 +42,10 @@ class NormalMode:
             return key_combo
 
     def get_command(self):
-        key_combo = self.get_keypress()
-        if key_combo in key_mapping:
-            result = key_mapping[key_combo]
-            return (result, {})
+        while True:
+            key_combo = self.get_keypress()
+            if key_combo in key_mapping:
+                result = key_mapping[key_combo]
+                return (result, {})
+            else:
+                log.error("This command is dogshit - {}".format(key_combo))

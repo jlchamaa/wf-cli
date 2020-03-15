@@ -9,7 +9,6 @@ log = logging.getLogger("wfcli")
 class ViewModel:
     def __init__(self):
         self.m = UserFile()
-        self.open_depth = 0
         try:
             with View() as self.v:
                 self.render()
@@ -105,27 +104,8 @@ class ViewModel:
             log.info(value)
 
     def open_below(self, content={}):
-        edit_mode = True
         self.v.change_mode("edit")
-        new_node = self.m.open_below()
-        while edit_mode:
-            self.render()
-            key_combo = self.v.mode.get_keypress()
-            if len(key_combo) > 1:
-                edit_mode = False
-            else:
-                if key_combo[0] == 27:  # ESC
-                    edit_mode = False
-                elif key_combo[0] == 127:  # BACKSPACE
-                    new_node.name = new_node.name[:-1]
-                elif key_combo[0] == 10:  # ENTER
-                    self.open_depth += 1
-                    self.open_below()
-                    self.open_depth -= 1
-                    edit_mode = False
-                else:  # WRITABLE KEY
-                    new_node.name += chr(key_combo[0])
-        self.v.change_mode("normal")
+        self.m.open_below()
         self.save_data()
         self.render()
 
@@ -139,5 +119,18 @@ class ViewModel:
         self.commit_and_save_data()
         self.render()
 
+    def add_char(self, content={"chr": ' '}):
+        log.info("I'm adding a '{}' here".format(content["chr"]))
+        self.render()
+
+    def delete_char(self, content={"num": 1}):
+        log.info("I'm deleting here")
+        self.render()
+
     def undo(self, content={}):
         pass
+
+    def change_view_mode(self, content={"mode": "normal"}):
+        self.v.change_mode(content["mode"])
+        log.info("Chnaging mode to {}".format(content["mode"]))
+        self.render()
