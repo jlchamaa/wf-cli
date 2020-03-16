@@ -9,6 +9,12 @@ from model.node_store import NodeStore
 log = logging.getLogger("wfcli")
 
 
+class Cursor:
+    def __init__(self):
+        self.line = 0
+        self.col = 0
+
+
 class UserFile:
     DATA_FILE = os.path.expanduser("~/.cache/.wfclidata")
     root_node_id = "0"
@@ -16,12 +22,12 @@ class UserFile:
     def __init__(self):
         self.nds = NodeStore()
         self.history = History()
-        self.cursor_position = 0
+        self.cursor = Cursor()
         self._load_data()
 
     @property
     def current_node(self):
-        return self.load_visible()[self.cursor_position][0]
+        return self.load_visible()[self.cursor.line][0]
 
     def _traverse_node(self, node, depth):
         current_node = self.nds.get_node(node)
@@ -79,26 +85,36 @@ class UserFile:
         pass
 
     def commit(self):
-        self.history.add(self.nds, self.cursor_position)
+        self.history.add(self.nds, self.cursor.line)
 
     def create_node(self, parent, **kwargs):
         node = Node(pa=parent, **kwargs)
         self.nds.add_node(node)
         return node
 
+    def collapse_node(self):
+        self.visible[self.cursor.line][0].closed = True
+
+    def expand_node(self):
+        self.visible[self.cursor.line][0].closed = False
+
     def nav_left(self):
-        self.visible[self.cursor_position][0].closed = True
+        if self.cursor.col > 0:
+            self.cursor.col -= 1
 
     def nav_right(self):
-        self.visible[self.cursor_position][0].closed = False
+        if self.cursor.col < len(self.current_node.name) - 1:
+            self.cursor.col += 1
 
     def nav_up(self):
-        if self.cursor_position > 0:
-            self.cursor_position -= 1
+        if self.cursor.line > 0:
+            self.cursor.line -= 1
+        # TODO set the horizontal as well
 
     def nav_down(self):
-        if self.cursor_position < len(self.visible) - 1:
-            self.cursor_position += 1
+        if self.cursor.line < len(self.visible) - 1:
+            self.cursor.line += 1
+        # TODO set the horizontal as well
 
     # IDEA: make the unlink and relink methods live inside
     # of the unlink_relink method?
@@ -151,7 +167,6 @@ class UserFile:
 
     def open_below(self):
         current_node = self.current_node
-        self.cursor_position += 1
 
         if current_node.state == "open":
             new_node = self.create_node(current_node.uuid)
@@ -160,7 +175,6 @@ class UserFile:
                 new_node.uuid,
                 position=0,
             )
-            return new_node
 
         else:  # new node is sibling of current node
             parent_node = self.nds.get_node(current_node.parent)
@@ -171,11 +185,22 @@ class UserFile:
                 new_node.uuid,
                 position=pos_in_parent_list + 1,
             )
-            return new_node
 
     def complete(self):
         current_node = self.current_node
         current_node.complete = not current_node.complete
+
+    def add_char(self, char):
+        current_node = self.current_node
+        name = current_node.name[0:self.cursor.col] + char + current_node.name[self.cursor.col:]
+        current_node.name = name
+
+    def delete_char(self, num):
+        current_node = self.current_node
+        if self.cursor.col > 0:
+            name = current_node.name[0:self.cursor.col - num] + current_node.name[self.cursor.col:]
+            current_node.name = name
+            self.nav_left()
 
     def delete_item(self, node_id=None):
         current_node = self.current_node if node_id is None else self.nds.get_node(node_id)
@@ -185,7 +210,7 @@ class UserFile:
         self.nds.get_node(parent_id).children.remove(current_node.uuid)
         del self.nds[current_node.uuid]
         if node_id is None:  # this is our top-level delete
-            self.cursor_position = max(0, self.cursor_position - 1)
+            self.cursor.line = max(0, self.cursor.line - 1)
             if len(self.nds.get_node(self.root_node_id).children) == 0:
                 new_node = self.create_node(
                     self.root_node_id,

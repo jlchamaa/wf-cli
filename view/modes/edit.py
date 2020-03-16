@@ -2,24 +2,24 @@ from view.modes import NormalMode
 
 
 class EditMode(NormalMode):
+    key_mapping = {
+        (27,): "normal_mode",  # RETURN TO NORMAL MODE
+        (127,): "delete_char",      # BACKSPACE
+        (9,): "indent",             # TAB
+        (27, 91, 90): "unindent",   # SHIFT-TAB
+        (10,): "open_below",        # ENTER
+    }
+
     @property
     def note(self):
         return "Edit Mode"
 
-    @property
-    def normal_mode_return_value(self):
-        return ("change_view_mode", {"mode": "normal"})
-
     def get_command(self):
-        key_combo = self.get_keypress()
-        if len(key_combo) > 1:
-            return self.normal_mode_return_value
+        key_combo = self.get_keycombo()
+        if key_combo in self.key_mapping:
+            return (self.key_mapping[key_combo],)
         else:
             if key_combo[0] == 27:  # ESC
-                return self.normal_mode_return_value
-            elif key_combo[0] == 127:  # BACKSPACE
-                return ("delete_char", {"num": 1})
-            elif key_combo[0] == 10:  # ENTER
-                return ("open_below", {})
+                return ("normal_mode",)
             else:  # WRITABLE KEY
-                return ("add_char", {"chr": chr(key_combo[0])})
+                return ("add_char", {"char": chr(key_combo[0])})

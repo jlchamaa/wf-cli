@@ -5,13 +5,15 @@ log = logging.getLogger("wfcli")
 
 class NormalMode:
     key_mapping = {
-        (ord('d'), ord('d')): "delete_item",
+        (ord('D'),): "delete_item",
         (ord('c'),): "complete",
-        (ord('i'),): "edit_item",
+        (ord('i'),): "edit_mode",
         (ord('k'),): "nav_up",
         (ord('j'),): "nav_down",
         (ord('h'),): "nav_left",
         (ord('l'),): "nav_right",
+        (ord('H'),): "collapse_node",
+        (ord('L'),): "expand_node",
         (ord('o'),): "open_below",
         (ord('p'),): "print_data",
         (ord('q'),): "quit_app",
@@ -34,10 +36,14 @@ class NormalMode:
         return "Normal Mode"
 
     @property
-    def selection(self):
-        return curses.A_REVERSE
+    def cursor_attr(self):
+        return curses.color_pair(2)
 
-    def get_keypress(self):
+    @property
+    def selection_attr(self):
+        return curses.color_pair(1)
+
+    def get_keycombo(self):
         while True:
             keypress = self.sc.getch()
             if keypress < 0:
@@ -47,12 +53,6 @@ class NormalMode:
                 while keypress >= 0:
                     key_combo.append(keypress)
                     keypress = self.sc.getch()
-            elif keypress in [100]:  # combo keys
-                key_combo = [keypress]
-                keypress = -1
-                while keypress < 0:
-                    keypress = self.sc.getch()
-                key_combo.append(keypress)
             else:
                 key_combo = [keypress]
             key_combo = tuple(key_combo)
@@ -60,7 +60,7 @@ class NormalMode:
 
     def get_command(self):
         while True:
-            key_combo = self.get_keypress()
+            key_combo = self.get_keycombo()
             if key_combo in self.key_mapping:
                 result = self.key_mapping[key_combo]
                 return (result, {})
