@@ -19,6 +19,8 @@ class NormalMode:
         (ord('q'),): "quit_app",
         (ord('s'),): "save_data",
         (ord('u'),): "undo",
+        (ord('0'),): "zero",
+        (ord('$'),): "dollar_sign",
         (9,): "indent",            # TAB
         (10,): "open_below",       # ENTER
         (27, 91, 90): "unindent",  # SHIFT-TAB

@@ -41,7 +41,7 @@ class ViewModel:
         log.info("Render")
         self.v.render_content(
             self.visible_nodes,
-            self.cursor_position,
+            self.cursor_y,
         )
 
     def commit_data(self, **kwargs):
@@ -60,8 +60,16 @@ class ViewModel:
         return self.m.visible
 
     @property
-    def cursor_position(self):
-        return (self.m.cursor.line, self.m.cursor.col)
+    def current_node(self, depth=False):
+        return self.m.current_node
+
+    @property
+    def cursor_x(self):
+        return self.v.cursor_x
+
+    @property
+    def cursor_y(self):
+        return self.m.cursor_y
 
     def warning(self, message):
         self.v.print_message(message)
@@ -77,12 +85,12 @@ class ViewModel:
         self.render()
 
     def nav_left(self, **kwargs):
-        self.m.nav_left()
+        self.v.nav_left(self.current_node(depth=True))
         self.save_data()
         self.render()
 
     def nav_right(self, **kwargs):
-        self.m.nav_right()
+        self.v.nav_right(self.current_node(depth=True))
         self.save_data()
         self.render()
 
@@ -134,15 +142,16 @@ class ViewModel:
 
     def add_char(self, char="", **kwargs):
         log.info("I'm adding a '{}' here".format(char))
-        self.m.add_char(char)
+        self.m.add_char(char, self.cursor_x)
         self.save_data()
         self.nav_right()
         self.render()
 
     def delete_char(self, num=1, **kwargs):
         log.info("I'm deleting here")
-        self.m.delete_char(num)
+        self.m.delete_char(num, self.cursor_x)
         self.save_data()
+        self.nav_left()
         self.render()
 
     def undo(self, content={}):
@@ -159,4 +168,12 @@ class ViewModel:
         log.info("Chnaging mode to edit")
         self.v.change_mode("edit")
         self.commit_and_save_data()
+        self.render()
+
+    def zero(self, **kwargs):
+        self.v.zero()
+        self.render()
+
+    def dollar_sign(self, **kwargs):
+        self.v.dollar_sign()
         self.render()

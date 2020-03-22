@@ -9,12 +9,6 @@ from model.node_store import NodeStore
 log = logging.getLogger("wfcli")
 
 
-class Cursor:
-    def __init__(self):
-        self.line = 0
-        self.col = 0
-
-
 class UserFile:
     DATA_FILE = os.path.expanduser("~/.cache/.wfclidata")
     root_node_id = "0"
@@ -30,17 +24,21 @@ class UserFile:
     def __init__(self):
         self.nds = NodeStore()
         self.history = History()
-        self.cursor = Cursor()
+        self.cursor_y = 0
         self._load_data()
         self._update = True
 
-    @property
-    def current_node(self):
-        return self.visible[self.cursor.line][0]
+    def current_node(self, depth=False):
+        node_pair = self.visible[self.cursor_y]
+        if depth:
+            return node_pair
+        else:
+            return node_pair[0]
 
     @property
     def visible(self):
         if self._update:
+            log.info("Recalculating visible")
             self._update = False
             return self.load_visible()
         else:
@@ -102,7 +100,7 @@ class UserFile:
         pass
 
     def commit(self):
-        self.history.add(self.nds, self.cursor.line)
+        self.history.add(self.nds, self.cursor_y)
 
     @update_visible
     def create_node(self, parent, **kwargs):
@@ -112,28 +110,20 @@ class UserFile:
 
     @update_visible
     def collapse_node(self):
-        self.visible[self.cursor.line][0].closed = True
+        self.visible[self.cursor_y][0].closed = True
 
     @update_visible
     def expand_node(self):
-        self.visible[self.cursor.line][0].closed = False
-
-    def nav_left(self):
-        if self.cursor.col > 0:
-            self.cursor.col -= 1
-
-    def nav_right(self):
-        if self.cursor.col < len(self.current_node.name) - 1:
-            self.cursor.col += 1
+        self.visible[self.cursor_y][0].closed = False
 
     def nav_up(self):
-        if self.cursor.line > 0:
-            self.cursor.line -= 1
+        if self.cursor_y > 0:
+            self.cursor_y -= 1
         # TODO set the horizontal as well
 
     def nav_down(self):
-        if self.cursor.line < len(self.visible) - 1:
-            self.cursor.line += 1
+        if self.cursor_y < len(self.visible) - 1:
+            self.cursor_y += 1
         # TODO set the horizontal as well
 
     # IDEA: make the unlink and relink methods live inside
@@ -162,7 +152,7 @@ class UserFile:
 
     @update_visible
     def indent(self):
-        current_node = self.current_node
+        current_node = self.current_node()
         parent_node = current_node.parent
         parents_child_list = self.nds.get_node(parent_node).children
         current_node_index = parents_child_list.index(current_node.uuid)
@@ -175,7 +165,7 @@ class UserFile:
 
     @update_visible
     def unindent(self):
-        current_node = self.current_node
+        current_node = self.current_node()
         parent_id = current_node.parent
         if parent_id == self.root_node_id:
             log.info("top level, no unindent")
@@ -192,7 +182,7 @@ class UserFile:
 
     @update_visible
     def open_below(self):
-        current_node = self.current_node
+        current_node = self.current_node()
 
         if current_node.state == "open":
             new_node = self.create_node(current_node.uuid)
@@ -214,33 +204,32 @@ class UserFile:
 
     @update_visible
     def complete(self):
-        current_node = self.current_node
+        current_node = self.current_node()
         current_node.complete = not current_node.complete
 
     @update_visible
-    def add_char(self, char):
-        current_node = self.current_node
-        name = current_node.name[0:self.cursor.col] + char + current_node.name[self.cursor.col:]
+    def add_char(self, char, cursor_x):
+        current_node = self.current_node()
+        name = current_node.name[0:cursor_x + 1] + char + current_node.name[cursor_x + 1:]
         current_node.name = name
 
     @update_visible
-    def delete_char(self, num):
-        current_node = self.current_node
-        if self.cursor.col > 0:
-            name = current_node.name[0:self.cursor.col - num] + current_node.name[self.cursor.col:]
+    def delete_char(self, num, cursor_x):
+        current_node = self.current_node()
+        if cursor_x > 0:
+            name = current_node.name[0:cursor_x - num] + current_node.name[cursor_x:]
             current_node.name = name
-            self.nav_left()
 
     @update_visible
     def delete_item(self, node_id=None):
-        current_node = self.current_node if node_id is None else self.nds.get_node(node_id)
+        current_node = self.current_node() if node_id is None else self.nds.get_node(node_id)
         for child_id in current_node.children[:]:
             self.delete_item(node_id=child_id)
         parent_id = current_node.parent
         self.nds.get_node(parent_id).children.remove(current_node.uuid)
         del self.nds[current_node.uuid]
         if node_id is None:  # this is our top-level delete
-            self.cursor.line = max(0, self.cursor.line - 1)
+            self.cursor_y = max(0, self.cursor_y - 1)
             if len(self.nds.get_node(self.root_node_id).children) == 0:
                 new_node = self.create_node(
                     self.root_node_id,

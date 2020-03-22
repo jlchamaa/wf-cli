@@ -7,6 +7,7 @@ log = logging.getLogger("wfcli")
 class View:
     def __init__(self):
         self.active_message = None
+        self.cursor_x = 0
         self.indent_size = 2
         self.inset = 1
         self.downset = 2
@@ -51,6 +52,20 @@ class View:
     def view_status(self):
         return None
 
+    def nav_left(self, current_node):
+        if self.cursor_x > 0:
+            self.cursor_x -= 1
+
+    def nav_right(self, current_node):
+        if self.cursor_x < len(current_node[0].name) - 1:
+            self.cursor_x += 1
+
+    def dollar_sign(self):
+        self.cursor_x = float("Inf")
+
+    def zero(self):
+        self.cursor_x = 0
+
     def print_message(self, message):
         self.active_message = message
 
@@ -67,9 +82,8 @@ class View:
             label,
         )
 
-    def render_content(self, content, cursor_position):
+    def render_content(self, content, curs_y):
         displayed = []
-        cline, ccol = cursor_position
         for node, depth in content:
             message = self.generate_line(node, depth)
             displayed.append(message)
@@ -79,14 +93,18 @@ class View:
         self.sc.addstr(1, 1, message)
         self.active_message = None
         for height, line in enumerate(displayed):
-            attribute = self.mode.selection_attr if height == cline else curses.A_NORMAL
+            attribute = self.mode.selection_attr if height == curs_y else curses.A_NORMAL
             self.sc.addstr(height + self.downset,
                            self.inset,
                            line,
                            attribute)
-            if height == cline:
-                cursor_y = self.inset + 3 + self.indent_size * content[height][1] + ccol
-                log.info("Cursor_y" + str(cursor_y))
-                self.sc.chgat(height + self.downset, cursor_y, 1, self.mode.cursor_attr)
+            if height == curs_y:
+                cursor_x = (self.inset
+                            + 3
+                            + self.indent_size * content[height][1]
+                            + min(self.cursor_x, len(content[height][0].name))
+                            )
+                log.info("Cursor_x" + str(cursor_x))
+                self.sc.chgat(height + self.downset, cursor_x, 1, self.mode.cursor_attr)
 
         self.sc.refresh()
