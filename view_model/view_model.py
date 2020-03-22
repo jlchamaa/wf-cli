@@ -57,7 +57,7 @@ class ViewModel:
 
     @property
     def visible_nodes(self):
-        return self.m.load_visible()
+        return self.m.visible
 
     @property
     def cursor_position(self):
@@ -117,7 +117,6 @@ class ViewModel:
     def open_below(self, **kwargs):
         self.v.change_mode("edit")
         self.m.open_below()
-        self.render()
         self.nav_down()
         self.commit_and_save_data()
         self.render()
@@ -137,7 +136,6 @@ class ViewModel:
         log.info("I'm adding a '{}' here".format(char))
         self.m.add_char(char)
         self.save_data()
-        self.render()
         self.nav_right()
         self.render()
 
