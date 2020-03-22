@@ -11,6 +11,10 @@ class EditMode(NormalMode):
     }
 
     @property
+    def eol_offset(self):
+        return 1
+
+    @property
     def note(self):
         return "Edit Mode"
 

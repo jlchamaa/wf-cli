@@ -65,7 +65,7 @@ class ViewModel:
 
     @property
     def cursor_x(self):
-        return self.v.cursor_x
+        return self.v.cursor_x(self.current_node())
 
     @property
     def cursor_y(self):
@@ -123,7 +123,7 @@ class ViewModel:
             log.info(value)
 
     def open_below(self, **kwargs):
-        self.v.change_mode("edit")
+        self.edit_mode()
         self.m.open_below()
         self.nav_down()
         self.commit_and_save_data()
@@ -159,13 +159,16 @@ class ViewModel:
         pass
 
     def normal_mode(self, **kwargs):
-        log.info("Chnaging mode to normal")
+        log.info("Changing mode to normal")
         self.v.change_mode("normal")
+        if not self.v.align_cursor(self.current_node()):
+            self.nav_left()
         self.commit_and_save_data()
         self.render()
 
     def edit_mode(self, **kwargs):
-        log.info("Chnaging mode to edit")
+        log.info("Changing mode to edit")
+        self.v.align_cursor(self.current_node())
         self.v.change_mode("edit")
         self.commit_and_save_data()
         self.render()

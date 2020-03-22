@@ -34,6 +34,10 @@ class NormalMode:
         return {"closed": ">", "open": "v", "item": "-"}
 
     @property
+    def eol_offset(self):
+        return 0
+
+    @property
     def note(self):
         return "Normal Mode"
 

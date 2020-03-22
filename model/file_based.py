@@ -210,7 +210,7 @@ class UserFile:
     @update_visible
     def add_char(self, char, cursor_x):
         current_node = self.current_node()
-        name = current_node.name[0:cursor_x + 1] + char + current_node.name[cursor_x + 1:]
+        name = current_node.name[0:cursor_x] + char + current_node.name[cursor_x:]
         current_node.name = name
 
     @update_visible
