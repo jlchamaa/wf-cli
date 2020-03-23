@@ -13,6 +13,14 @@ class UserFile:
     DATA_FILE = os.path.expanduser("~/.cache/.wfclidata")
     root_node_id = "0"
 
+    # SETUP METHODS
+    def __init__(self):
+        self.nds = NodeStore()
+        self.history = History()
+        self.cursor_y = 0
+        self._load_data()
+        self._update = True
+
     # Decorator for funtions that need to force an update to our tree
     def update_visible(func):
         def do_update(self, *args, **kwargs):
@@ -21,13 +29,6 @@ class UserFile:
             return result
         return do_update
 
-    def __init__(self):
-        self.nds = NodeStore()
-        self.history = History()
-        self.cursor_y = 0
-        self._load_data()
-        self._update = True
-
     def current_node(self, depth=False):
         node_pair = self.visible[self.cursor_y]
         if depth:
@@ -35,36 +36,7 @@ class UserFile:
         else:
             return node_pair[0]
 
-    @property
-    def visible(self):
-        if self._update:
-            log.info("Recalculating visible")
-            self._update = False
-            return self.load_visible()
-        else:
-            return self._visible
-
-    def load_visible(self):
-        """
-        returns a list of tuples like this ( node, depth,)
-        """
-        self._visible = []
-        for node in self.nds.get_node(self.root_node_id).children:
-            if node is not None:
-                self._traverse_node(node, 0)
-        return self._visible
-
-    def _traverse_node(self, node, depth):
-        current_node = self.nds.get_node(node)
-        self._visible.append((current_node, depth))
-        if not current_node.closed:
-            for child in current_node.children:
-                self._traverse_node(child, depth + 1)
-
-    def get_children(self, parent_id):
-        parent_node = self.nds.get_node(parent_id)
-        return [self.nds.get_node(node_id) for node_id in parent_node.children]
-
+    # FILE METHODS
     def data_from_file_object(self, fo):
         data = json.load(fo)
         for node_def in data:
@@ -102,41 +74,43 @@ class UserFile:
     def commit(self):
         self.history.add(self.nds, self.cursor_y)
 
-    @update_visible
-    def create_node(self, parent, **kwargs):
-        node = Node(pa=parent, **kwargs)
-        self.nds.add_node(node)
-        return node
+    # TREE TRAVERSAL
+    @property
+    def visible(self):
+        if self._update:
+            log.info("Recalculating visible")
+            self._update = False
+            return self.load_visible()
+        else:
+            return self._visible
 
-    @update_visible
-    def collapse_node(self):
-        self.visible[self.cursor_y][0].closed = True
+    def load_visible(self):
+        """
+        returns a list of tuples like this ( node, depth,)
+        """
+        self._visible = []
+        for node in self.nds.get_node(self.root_node_id).children:
+            if node is not None:
+                self._traverse_node(node, 0)
+        return self._visible
 
-    @update_visible
-    def expand_node(self):
-        self.visible[self.cursor_y][0].closed = False
+    def _traverse_node(self, node, depth):
+        current_node = self.nds.get_node(node)
+        self._visible.append((current_node, depth))
+        if not current_node.closed:
+            for child in current_node.children:
+                self._traverse_node(child, depth + 1)
 
+    # NAVIGATION METHODS
     def nav_up(self):
         if self.cursor_y > 0:
             self.cursor_y -= 1
-        # TODO set the horizontal as well
 
     def nav_down(self):
         if self.cursor_y < len(self.visible) - 1:
             self.cursor_y += 1
-        # TODO set the horizontal as well
 
-    # IDEA: make the unlink and relink methods live inside
-    # of the unlink_relink method?
-    @update_visible
-    def unlink_parent_child(self, parent, child):
-        assert child in self.nds
-        assert parent in self.nds
-        assert self.nds.get_node(child).parent == parent
-        assert child in self.nds.get_node(parent).children
-        self.nds.get_node(parent).children.remove(child)
-        self.nds.get_node(child).parent = None
-
+    # LINKING METHODS
     @update_visible
     def link_parent_child(self, parent, child, position=None):
         self.nds.get_node(child).parent = parent
@@ -147,9 +121,17 @@ class UserFile:
 
     @update_visible
     def unlink_relink(self, old_parent, child, new_parent, position=None):
-        self.unlink_parent_child(old_parent, child)
+        def unlink_parent_child(self, parent, child):
+            assert child in self.nds
+            assert parent in self.nds
+            assert self.nds.get_node(child).parent == parent
+            assert child in self.nds.get_node(parent).children
+            self.nds.get_node(parent).children.remove(child)
+            self.nds.get_node(child).parent = None
+        unlink_parent_child(self, old_parent, child)
         self.link_parent_child(new_parent, child, position)
 
+    # MANIPULATE NODES
     @update_visible
     def indent(self):
         current_node = self.current_node()
@@ -203,24 +185,6 @@ class UserFile:
             )
 
     @update_visible
-    def complete(self):
-        current_node = self.current_node()
-        current_node.complete = not current_node.complete
-
-    @update_visible
-    def add_char(self, char, cursor_x):
-        current_node = self.current_node()
-        name = current_node.name[0:cursor_x] + char + current_node.name[cursor_x:]
-        current_node.name = name
-
-    @update_visible
-    def delete_char(self, num, cursor_x):
-        current_node = self.current_node()
-        if cursor_x > 0:
-            name = current_node.name[0:cursor_x - num] + current_node.name[cursor_x:]
-            current_node.name = name
-
-    @update_visible
     def delete_item(self, node_id=None):
         current_node = self.current_node() if node_id is None else self.nds.get_node(node_id)
         for child_id in current_node.children[:]:
@@ -240,3 +204,36 @@ class UserFile:
                     new_node.uuid,
                     position=0,
                 )
+
+    @update_visible
+    def complete(self):
+        current_node = self.current_node()
+        current_node.complete = not current_node.complete
+
+    @update_visible
+    def create_node(self, parent, **kwargs):
+        node = Node(pa=parent, **kwargs)
+        self.nds.add_node(node)
+        return node
+
+    @update_visible
+    def collapse_node(self):
+        self.visible[self.cursor_y][0].closed = True
+
+    @update_visible
+    def expand_node(self):
+        self.visible[self.cursor_y][0].closed = False
+
+    # EDIT TEXT
+    @update_visible
+    def add_char(self, char, cursor_x):
+        current_node = self.current_node()
+        name = current_node.name[0:cursor_x] + char + current_node.name[cursor_x:]
+        current_node.name = name
+
+    @update_visible
+    def delete_char(self, num, cursor_x):
+        current_node = self.current_node()
+        if cursor_x > 0:
+            name = current_node.name[0:cursor_x - num] + current_node.name[cursor_x:]
+            current_node.name = name

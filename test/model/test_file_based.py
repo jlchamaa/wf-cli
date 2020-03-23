@@ -4,7 +4,6 @@ import unittest.mock as mock
 
 from model.file_based import UserFile
 from model.model_node import Node
-from model.history import History
 from model.node_store import NodeStore
 
 
@@ -39,14 +38,6 @@ class Test_UserFile(unittest.TestCase):
         self.uf._visible = []
         self.uf._traverse_node("4", 0)
         self.assertEqual(len(self.uf._visible), 1)
-
-    def test_get_children(self):
-        children = self.uf.get_children("0")
-        self.assertListEqual([child.uuid for child in children], ["1", "2"])
-
-    def test_get_no_children(self):
-        children = self.uf.get_children("4")
-        self.assertListEqual(children, [])
 
     def test_create_node(self):
         node = self.uf.create_node("parent")

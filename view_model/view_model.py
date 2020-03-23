@@ -7,6 +7,7 @@ log = logging.getLogger("wfcli")
 
 
 class ViewModel:
+    # SETUP METHODS
     def __init__(self):
         self.m = UserFile()
         try:
@@ -31,12 +32,12 @@ class ViewModel:
                     ))
             except AttributeError as ae:
                 log.error("Command: {}\nError:{}".format(payload[0], ae))
-                self.warning("Illegal command {}".format(payload[0]))
 
     def quit_app(self, **kwargs):
         self.v.open = False
         log.error("Closing App Legitimately")
 
+    # PRINTING METHODS
     def render(self, **kwargs):
         log.info("Render")
         self.v.render_content(
@@ -44,6 +45,7 @@ class ViewModel:
             self.cursor_y,
         )
 
+    # COMMIT AND SAVE METHODS
     def commit_data(self, **kwargs):
         self.m.commit()
 
@@ -55,6 +57,10 @@ class ViewModel:
         self.commit_data()
         self.save_data()
 
+    def undo(self, content={}):
+        log.info("Undo")
+
+    # STATE METHODS
     @property
     def visible_nodes(self):
         return self.m.visible
@@ -71,19 +77,7 @@ class ViewModel:
     def cursor_y(self):
         return self.m.cursor_y
 
-    def warning(self, message):
-        self.v.print_message(message)
-
-    def indent(self, **kwargs):
-        self.m.indent()
-        self.commit_and_save_data()
-        self.render()
-
-    def unindent(self, **kwargs):
-        self.m.unindent()
-        self.commit_and_save_data()
-        self.render()
-
+    # NAVIGATION METHODS
     def nav_left(self, **kwargs):
         self.v.nav_left(self.current_node(depth=True))
         self.save_data()
@@ -104,6 +98,25 @@ class ViewModel:
         self.save_data()
         self.render()
 
+    def zero(self, **kwargs):
+        self.v.zero()
+        self.render()
+
+    def dollar_sign(self, **kwargs):
+        self.v.dollar_sign()
+        self.render()
+
+    # EDIT NODE OBJECTS
+    def indent(self, **kwargs):
+        self.m.indent()
+        self.commit_and_save_data()
+        self.render()
+
+    def unindent(self, **kwargs):
+        self.m.unindent()
+        self.commit_and_save_data()
+        self.render()
+
     def expand_node(self, **kwargs):
         self.m.expand_node()
         self.commit_and_save_data()
@@ -113,14 +126,6 @@ class ViewModel:
         self.m.collapse_node()
         self.commit_and_save_data()
         self.render()
-
-    def print_data(self, **kwargs):
-        log.info("Visible nodes\n=====")
-        for node, depth in self.visible_nodes:
-            log.info(node)
-        log.info("All nodes\n=====")
-        for key, value in self.m.nodes.items():
-            log.info(value)
 
     def open_below(self, **kwargs):
         self.edit_mode()
@@ -140,6 +145,15 @@ class ViewModel:
         self.commit_and_save_data()
         self.render()
 
+    def print_data(self, **kwargs):
+        log.info("Visible nodes\n=====")
+        for node, depth in self.visible_nodes:
+            log.info(node)
+        log.info("All nodes\n=====")
+        for key, value in self.m.nodes.items():
+            log.info(value)
+
+    # EDIT TEXT
     def add_char(self, char="", **kwargs):
         log.info("I'm adding a '{}' here".format(char))
         self.m.add_char(char, self.cursor_x)
@@ -154,10 +168,7 @@ class ViewModel:
         self.nav_left()
         self.render()
 
-    def undo(self, content={}):
-        log.info("Undo")
-        pass
-
+    # MODE CHANGING
     def normal_mode(self, **kwargs):
         log.info("Changing mode to normal")
         self.v.change_mode("normal")
@@ -171,12 +182,4 @@ class ViewModel:
         self.v.align_cursor(self.current_node())
         self.v.change_mode("edit")
         self.commit_and_save_data()
-        self.render()
-
-    def zero(self, **kwargs):
-        self.v.zero()
-        self.render()
-
-    def dollar_sign(self, **kwargs):
-        self.v.dollar_sign()
         self.render()

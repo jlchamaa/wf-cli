@@ -5,6 +5,7 @@ log = logging.getLogger("wfcli")
 
 
 class View:
+    # SETUP METHODS
     def __init__(self):
         self.active_message = None
         self._cursor_x = 0
@@ -38,25 +39,23 @@ class View:
         curses.nocbreak()
         curses.endwin()
 
-    def align_cursor(self, current_node):
-        if self._cursor_x != self.cursor_x(current_node):
-            self._cursor_x = self.cursor_x(current_node)
-            return True
-        return False
+    def send_command(self):
+        while self.open:
+            yield self.mode.get_command()
 
+    # MODE METHODS
     def change_mode(self, mode):
         if mode in self.mode_map:
             self.mode = self.mode_map[mode]
         else:
             raise ValueError("There isn't a {} mode".format(mode))
 
-    def send_command(self):
-        while self.open:
-            yield self.mode.get_command()
-
-    @property
-    def view_status(self):
-        return None
+    # CURSOR METHODS
+    def align_cursor(self, current_node):
+        if self._cursor_x != self.cursor_x(current_node):
+            self._cursor_x = self.cursor_x(current_node)
+            return True
+        return False
 
     def cursor_x(self, current_node):
         linelength = max(
@@ -91,9 +90,7 @@ class View:
     def zero(self):
         self._cursor_x = 0
 
-    def print_message(self, message):
-        self.active_message = message
-
+    # PRINTING METHODS
     def generate_line(self, node, depth):
         def strikethrough(text):
             result = ''
