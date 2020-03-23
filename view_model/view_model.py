@@ -66,12 +66,12 @@ class ViewModel:
         return self.m.visible
 
     @property
-    def current_node(self, depth=False):
-        return self.m.current_node
+    def current_node(self):
+        return self.m.current_node(depth=True)
 
     @property
     def cursor_x(self):
-        return self.v.cursor_x(self.current_node())
+        return self.v.cursor_x(self.current_node)
 
     @property
     def cursor_y(self):
@@ -79,12 +79,12 @@ class ViewModel:
 
     # NAVIGATION METHODS
     def nav_left(self, **kwargs):
-        self.v.nav_left(self.current_node(depth=True))
+        self.v.nav_left(self.current_node)
         self.save_data()
         self.render()
 
     def nav_right(self, **kwargs):
-        self.v.nav_right(self.current_node(depth=True))
+        self.v.nav_right(self.current_node)
         self.save_data()
         self.render()
 
@@ -99,11 +99,11 @@ class ViewModel:
         self.render()
 
     def zero(self, **kwargs):
-        self.v.zero()
+        self.v.lc.zero()
         self.render()
 
     def dollar_sign(self, **kwargs):
-        self.v.dollar_sign()
+        self.v.lc.dollar_sign()
         self.render()
 
     # EDIT NODE OBJECTS
@@ -172,14 +172,14 @@ class ViewModel:
     def normal_mode(self, **kwargs):
         log.info("Changing mode to normal")
         self.v.change_mode("normal")
-        if not self.v.align_cursor(self.current_node()):
+        if not self.v.align_cursor(self.current_node):
             self.nav_left()
         self.commit_and_save_data()
         self.render()
 
     def edit_mode(self, **kwargs):
         log.info("Changing mode to edit")
-        self.v.align_cursor(self.current_node())
+        self.v.align_cursor(self.current_node)
         self.v.change_mode("edit")
         self.commit_and_save_data()
         self.render()

@@ -4,11 +4,57 @@ import logging
 log = logging.getLogger("wfcli")
 
 
+class LateralCursor:
+    def __init__(self):
+        self._index = 0
+        self.allowed_offset = 0
+
+    def align_cursor(self, current_node):
+        if self._index != self.in_line(current_node):
+            self._index = self.in_line(current_node)
+            return True
+        return False
+
+    def in_line(self, node_pair):
+        current_node = node_pair[0]
+        linelength = max(
+            len(current_node.name) - 1 + self.allowed_offset,
+            0,
+        )
+        current = self._index
+        res = min(linelength, current)
+        log.info("Comp {}:{}, return {}".format(linelength, current, res))
+        return res
+
+    def nav_left(self, current_node):
+        found_x = self.in_line(current_node)
+        if found_x > 0:
+            self._index = found_x - 1
+        else:
+            self._index = 0
+
+    def nav_right(self, current_node):
+        found_x = self.in_line(current_node)
+        log.info("Nav_right found_x: {}".format(found_x))
+        max_allowed = len(current_node[0].name) - 1 + self.allowed_offset
+        log.info("Nav_right max: {}".format(max_allowed))
+        if found_x < max_allowed:
+            self._index = found_x + 1
+        else:
+            self._index = max_allowed
+
+    def dollar_sign(self):
+        self._index = float("Inf")
+
+    def zero(self):
+        self._index = 0
+
+
 class View:
     # SETUP METHODS
     def __init__(self):
+        self.lc = LateralCursor()
         self.active_message = None
-        self._cursor_x = 0
         self.indent_size = 2
         self.inset = 1
         self.downset = 2
@@ -47,56 +93,31 @@ class View:
     def change_mode(self, mode):
         if mode in self.mode_map:
             self.mode = self.mode_map[mode]
+            self.lc.allowed_offset = self.mode.eol_offset
         else:
             raise ValueError("There isn't a {} mode".format(mode))
 
     # CURSOR METHODS
     def align_cursor(self, current_node):
-        if self._cursor_x != self.cursor_x(current_node):
-            self._cursor_x = self.cursor_x(current_node)
-            return True
-        return False
+        return self.lc.align_cursor(current_node)
 
     def cursor_x(self, current_node):
-        linelength = max(
-            len(current_node.name) - 1 + self.mode.eol_offset,
-            0,
-        )
-        current = self._cursor_x
-        res = min(linelength, current)
-        log.info("Comp {}:{}, return {}".format(linelength, current, res))
-        return res
+        return self.lc.in_line(current_node)
 
     def nav_left(self, current_node):
-        found_x = self.cursor_x(current_node[0])
-        if found_x > 0:
-            self._cursor_x = found_x - 1
-        else:
-            self._cursor_x = 0
+        self.lc.nav_left(current_node)
 
     def nav_right(self, current_node):
-        found_x = self.cursor_x(current_node[0])
-        log.info("Nav_right found_x: {}".format(found_x))
-        max_allowed = len(current_node[0].name) - 1 + self.mode.eol_offset
-        log.info("Nav_right max: {}".format(max_allowed))
-        if found_x < max_allowed:
-            self._cursor_x = found_x + 1
-        else:
-            self._cursor_x = max_allowed
-
-    def dollar_sign(self):
-        self._cursor_x = float("Inf")
-
-    def zero(self):
-        self._cursor_x = 0
+        self.lc.nav_right(current_node)
 
     # PRINTING METHODS
-    def generate_line(self, node, depth):
+    def generate_line(self, node_tuple):
         def strikethrough(text):
             result = ''
             for c in text:
                 result = result + c + '\u0336'
             return result
+        node, depth = node_tuple
         label = strikethrough(node.name) if node.complete else node.name
         return "{} {} {}".format(
             " " * self.indent_size * depth,
@@ -111,8 +132,7 @@ class View:
         self.sc.addstr(1, 1, message)
         self.active_message = None
         for height, node_tuple in enumerate(content):
-            node, depth = node_tuple
-            message = self.generate_line(node, depth)
+            message = self.generate_line(node_tuple)
             attribute = self.mode.selection_attr if height == curs_y else curses.A_NORMAL
             self.sc.addstr(height + self.downset,
                            self.inset,
@@ -121,8 +141,8 @@ class View:
             if height == curs_y:
                 cursor_x = (self.inset
                             + 3
-                            + self.indent_size * depth
-                            + self.cursor_x(node)
+                            + self.indent_size * node_tuple[1]
+                            + self.cursor_x(node_tuple)
                             )
                 self.sc.chgat(height + self.downset, cursor_x, 1, self.mode.cursor_attr)
 
