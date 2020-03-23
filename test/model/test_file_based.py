@@ -28,17 +28,17 @@ class Test_UserFile(unittest.TestCase):
         self.assertEqual(5, len(self.uf.nds))
 
     def test_current_node(self):
-        self.assertEqual(self.uf.current_node.uuid, "1")
+        self.assertEqual(self.uf.current_node().uuid, "1")
 
     def test_traverse_small(self):
-        self.uf.visible = []
+        self.uf._visible = []
         self.uf._traverse_node("2", 0)
-        self.assertEqual(len(self.uf.visible), 3)
+        self.assertEqual(len(self.uf._visible), 3)
 
     def test_traverse_single(self):
-        self.uf.visible = []
+        self.uf._visible = []
         self.uf._traverse_node("4", 0)
-        self.assertEqual(len(self.uf.visible), 1)
+        self.assertEqual(len(self.uf._visible), 1)
 
     def test_get_children(self):
         children = self.uf.get_children("0")
@@ -55,8 +55,8 @@ class Test_UserFile(unittest.TestCase):
     def test_close_open_item(self):
         self.uf.load_visible()
         self.assertEqual(len(self.uf.visible), 4)
-        self.uf.cursor_position = 1
-        self.uf.nav_left()
+        self.uf.cursor_y = 1
+        self.uf.collapse_node()
         self.uf.load_visible()
         self.assertEqual(len(self.uf.visible), 2)
 
@@ -65,8 +65,8 @@ class Test_UserFile(unittest.TestCase):
         self.uf.nds.get_node("4").children.append("5")
         self.uf.load_visible()
         self.assertEqual(len(self.uf.visible), 5)
-        self.uf.cursor_position = 1
-        self.uf.nav_left()
+        self.uf.cursor_y = 1
+        self.uf.collapse_node()
         self.uf.load_visible()
         self.assertEqual(len(self.uf.visible), 2)
 
@@ -74,16 +74,16 @@ class Test_UserFile(unittest.TestCase):
         self.uf.nds.get_node("2").closed = True
         self.uf.load_visible()
         self.assertEqual(len(self.uf.visible), 2)
-        self.uf.cursor_position = 1
-        self.uf.nav_left()
+        self.uf.cursor_y = 1
+        self.uf.collapse_node()
         self.uf.load_visible()
         self.assertEqual(len(self.uf.visible), 2)
 
     def test_close_leaf_item(self):
         self.uf.load_visible()
         self.assertEqual(len(self.uf.visible), 4)
-        self.uf.cursor_position = 0
-        self.uf.nav_left()
+        self.uf.cursor_y = 0
+        self.uf.collapse_node()
         self.uf.load_visible()
         self.assertEqual(len(self.uf.visible), 4)
 
@@ -91,8 +91,8 @@ class Test_UserFile(unittest.TestCase):
         self.uf.nds.get_node("2").closed = True
         self.uf.load_visible()
         self.assertEqual(len(self.uf.visible), 2)
-        self.uf.cursor_position = 1
-        self.uf.nav_right()
+        self.uf.cursor_y = 1
+        self.uf.expand_node()
         self.uf.load_visible()
         self.assertEqual(len(self.uf.visible), 4)
 
@@ -100,8 +100,8 @@ class Test_UserFile(unittest.TestCase):
         self.uf.load_visible()
         self.assertEqual(len(self.uf.visible), 4)
         self.assertFalse(self.uf.nds.get_node("2").closed)
-        self.uf.cursor_position = 1
-        self.uf.nav_right()
+        self.uf.cursor_y = 1
+        self.uf.expand_node()
         self.uf.load_visible()
         self.assertEqual(len(self.uf.visible), 4)
 
@@ -112,8 +112,8 @@ class Test_UserFile(unittest.TestCase):
         self.uf.nds.get_node("2").closed = True
         self.uf.load_visible()
         self.assertEqual(len(self.uf.visible), 2)
-        self.uf.cursor_position = 1
-        self.uf.nav_right()
+        self.uf.cursor_y = 1
+        self.uf.expand_node()
         self.uf.load_visible()
         self.assertEqual(len(self.uf.visible), 5)
 
@@ -128,8 +128,8 @@ class Test_UserFile(unittest.TestCase):
         self.uf.nds.get_node("4").closed = True
         self.uf.load_visible()
         self.assertEqual(len(self.uf.visible), 2)
-        self.uf.cursor_position = 1
-        self.uf.nav_right()
+        self.uf.cursor_y = 1
+        self.uf.expand_node()
         self.uf.load_visible()
         self.assertEqual(len(self.uf.visible), 4)
 
@@ -140,16 +140,16 @@ class Test_UserFile(unittest.TestCase):
         self.uf.nds.get_node("2").closed = True
         self.uf.load_visible()
         self.assertEqual(len(self.uf.visible), 2)
-        self.uf.cursor_position = 1
-        self.uf.nav_right()
+        self.uf.cursor_y = 1
+        self.uf.expand_node()
         self.uf.load_visible()
         self.assertEqual(len(self.uf.visible), 5)
 
     def test_open_leaf_item(self):
         self.uf.load_visible()
         self.assertEqual(len(self.uf.visible), 4)
-        self.uf.cursor_position = 0
-        self.uf.nav_right()
+        self.uf.cursor_y = 0
+        self.uf.expand_node()
         self.uf.load_visible()
         self.assertEqual(len(self.uf.visible), 4)
 
