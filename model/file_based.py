@@ -69,7 +69,8 @@ class UserFile:
             self.data_from_file_object(f)
 
     def save(self):
-        pass
+        with open(self.DATA_FILE, "w") as f:
+            json.dump(self.nds.flat_format, f, indent=2)
 
     def commit(self):
         self.history.add(self.nds, self.cursor_y)

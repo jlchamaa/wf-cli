@@ -19,6 +19,8 @@ class ViewModel:
         except BaseException as be:
             log.error("Exception {} raised.  Shut down".format(be))
             raise be
+        finally:
+            self.m.save()
 
     def recieve_commands(self):
         for payload in self.v.send_command():

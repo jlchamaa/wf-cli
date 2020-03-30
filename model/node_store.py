@@ -13,7 +13,7 @@ class NodeStore:
 
     def __contains__(self, item):
         return item in self.nodes
-    
+
     def __delitem__(self, item):
         del self.nodes[item]
 
@@ -22,3 +22,7 @@ class NodeStore:
 
     def digest(self):
         return "123"
+
+    @property
+    def flat_format(self):
+        return [node.flat_format for uuid, node in self.nodes.items()]
