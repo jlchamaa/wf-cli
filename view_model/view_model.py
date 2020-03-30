@@ -108,6 +108,14 @@ class ViewModel:
         self.v.lc.dollar_sign()
         self.render()
 
+    def top(self, **kwargs):
+        self.m.top()
+        self.render()
+
+    def bottom(self, **kwargs):
+        self.m.bottom()
+        self.render()
+
     # EDIT NODE OBJECTS
     def indent(self, **kwargs):
         self.m.indent()

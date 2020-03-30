@@ -110,6 +110,12 @@ class UserFile:
         if self.cursor_y < len(self.visible) - 1:
             self.cursor_y += 1
 
+    def bottom(self):
+        self.cursor_y = len(self.visible) - 1
+
+    def top(self):
+        self.cursor_y = 0
+
     # LINKING METHODS
     @update_visible
     def link_parent_child(self, parent, child, position=None):
