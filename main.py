@@ -11,6 +11,8 @@ log.addHandler(fh)
 def main():
     log.info("Main loop entered")
     vm = ViewModel()
+    vm.run()
+
 
 if __name__ == "__main__":
     main()

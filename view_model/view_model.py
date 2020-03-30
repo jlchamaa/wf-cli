@@ -10,6 +10,8 @@ class ViewModel:
     # SETUP METHODS
     def __init__(self):
         self.m = UserFile()
+
+    def run(self):
         try:
             with View() as self.v:
                 self.render()
@@ -165,7 +167,8 @@ class ViewModel:
         log.info("I'm deleting here")
         self.m.delete_char(num, self.cursor_x)
         self.save_data()
-        self.nav_left()
+        if not self.v.align_cursor(self.current_node):
+            self.nav_left()
         self.render()
 
     # MODE CHANGING
@@ -182,4 +185,9 @@ class ViewModel:
         self.v.align_cursor(self.current_node)
         self.v.change_mode("edit")
         self.commit_and_save_data()
+        self.render()
+
+    def edit_EOL(self, **kwargs):
+        self.edit_mode()
+        self.dollar_sign()
         self.render()

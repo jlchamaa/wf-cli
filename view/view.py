@@ -6,7 +6,7 @@ log = logging.getLogger("wfcli")
 
 class LateralCursor:
     def __init__(self):
-        self._index = 0
+        self._index = float("-Inf")
         self.allowed_offset = 0
 
     def align_cursor(self, current_node):
@@ -21,7 +21,7 @@ class LateralCursor:
             len(current_node.name) - 1 + self.allowed_offset,
             0,
         )
-        current = self._index
+        current = max(0, self._index)
         res = min(linelength, current)
         log.info("Comp {}:{}, return {}".format(linelength, current, res))
         return res
@@ -47,7 +47,7 @@ class LateralCursor:
         self._index = float("Inf")
 
     def zero(self):
-        self._index = 0
+        self._index = float("-Inf")
 
 
 class View:
@@ -58,6 +58,11 @@ class View:
         self.indent_size = 2
         self.inset = 1
         self.downset = 2
+        self.mode_map = {
+            "normal": NormalMode(),
+            "edit": EditMode(),
+        }
+        self.change_mode("normal")
 
     @staticmethod
     def init_colors():
@@ -73,11 +78,6 @@ class View:
         curses.cbreak()
         self.sc.nodelay(True)
         self.open = True
-        self.mode_map = {
-            "normal": NormalMode(self.sc),
-            "edit": EditMode(self.sc),
-        }
-        self.change_mode("normal")
         return self
 
     def __exit__(self, *args):
@@ -87,7 +87,7 @@ class View:
 
     def send_command(self):
         while self.open:
-            yield self.mode.get_command()
+            yield self.mode.get_command(self.sc)
 
     # MODE METHODS
     def change_mode(self, mode):

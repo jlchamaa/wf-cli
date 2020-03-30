@@ -7,6 +7,7 @@ class EditMode(NormalMode):
         (127,): "delete_char",      # BACKSPACE
         (9,): "indent",             # TAB
         (27, 91, 90): "unindent",   # SHIFT-TAB
+        (27, 91, 67): "nav_right",  # RIGHT ARROW
         (10,): "open_below",        # ENTER
     }
 
@@ -18,8 +19,8 @@ class EditMode(NormalMode):
     def note(self):
         return "Edit Mode"
 
-    def get_command(self):
-        key_combo = self.get_keycombo()
+    def get_command(self, screen):
+        key_combo = self.get_keycombo(screen)
         if key_combo in self.key_mapping:
             return (self.key_mapping[key_combo],)
         else:
