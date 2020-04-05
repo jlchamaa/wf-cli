@@ -26,6 +26,7 @@ class NormalMode:
         ord('u'): "undo",
         ord('0'): "zero",
         ord('$'): "dollar_sign",
+        curses.KEY_RESIZE: "render",
         9: "indent",            # TAB
         10: "open_below",       # ENTER
         (27, 91, 90): "unindent"  # SHIFT-TAB
@@ -33,7 +34,13 @@ class NormalMode:
 
     @property
     def indicators(self):
-        return {"closed": ">", "open": "v", "item": "-"}
+        return {
+            "closed": "✚",
+            "open": "v",
+            "item": "-",
+            "complete_item": "✓",
+            "complete_parent": "✷",
+        }
 
     @property
     def eol_offset(self):
@@ -51,31 +58,15 @@ class NormalMode:
     def selection_attr(self):
         return curses.color_pair(1)
 
-    def get_keypress(self, screen, wait=True):
-        while True:
-            keypress = screen.getch()
-            if keypress < 0:
-                if wait:
-                    continue
-                else:
-                    return keypress
-            # 27 is a special case, because it could mean I pressed
-            # the escape key, or it could mean it's an escape code
-            if keypress == 27:
-                a = self.get_keypress(screen, wait=False)
-                if a == -1:
-                    return 27
-                else:
-                    b = self.get_keypress(screen, wait=False)
-                    return (27, a, b)
+    @property
+    def border_attr(self):
+        return curses.color_pair(0)
 
-            return keypress
-
-    def get_command(self, screen):
+    def get_command(self, keygen):
         dict_to_inspect = self.key_mapping
         while True:
             try:
-                keypress = self.get_keypress(screen)
+                keypress = next(keygen)
                 result = dict_to_inspect[keypress]
                 if isinstance(result, dict):
                     dict_to_inspect = result

@@ -38,6 +38,12 @@ class Node:
     @property
     def state(self):
         if len(self.children) == 0:
-            return "item"
+            if self.complete:
+                return "complete_item"
+            else:
+                return "item"
         else:
-            return "closed" if self.closed else "open"
+            if self.complete:
+                return "complete_parent"
+            else:
+                return "closed" if self.closed else "open"

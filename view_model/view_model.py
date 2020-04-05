@@ -84,22 +84,18 @@ class ViewModel:
     # NAVIGATION METHODS
     def nav_left(self, **kwargs):
         self.v.nav_left(self.current_node)
-        self.save_data()
         self.render()
 
     def nav_right(self, **kwargs):
         self.v.nav_right(self.current_node)
-        self.save_data()
         self.render()
 
     def nav_up(self, **kwargs):
         self.m.nav_up()
-        self.save_data()
         self.render()
 
     def nav_down(self, **kwargs):
         self.m.nav_down()
-        self.save_data()
         self.render()
 
     def zero(self, **kwargs):
@@ -169,14 +165,12 @@ class ViewModel:
     def add_char(self, char="", **kwargs):
         log.info("I'm adding a '{}' here".format(char))
         self.m.add_char(char, self.cursor_x)
-        self.save_data()
         self.nav_right()
         self.render()
 
     def delete_char(self, num=1, **kwargs):
         log.info("I'm deleting here")
         self.m.delete_char(num, self.cursor_x)
-        self.save_data()
         if not self.v.align_cursor(self.current_node):
             self.nav_left()
         self.render()
