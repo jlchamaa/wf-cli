@@ -1,9 +1,18 @@
+import logging
+
+
+log = logging.getLogger("wfcli")
+
+
 class NodeStore:
     # a shallow wrapper for a dictionary.
     # However, NodeStore implements a digest method
     # these objects get stored in History in their entirety
     def __init__(self):
         self.nodes = {}
+
+    def __eq__(self, other_nds):
+        return self.digest == other_nds.digest
 
     def get_node(self, node_id):
         return self.nodes[node_id]
@@ -20,8 +29,13 @@ class NodeStore:
     def __len__(self):
         return len(self.nodes)
 
+    @property
     def digest(self):
-        return "123"
+        iterable = [(key, node.digest) for key, node in self.nodes.items()]
+        fs = frozenset(iterable)
+        res = hash(fs)
+        log.info("iterable: {}\nfs: {}\n Hash: {}".format(iterable, fs, res))
+        return res
 
     @property
     def flat_format(self):

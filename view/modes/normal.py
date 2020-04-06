@@ -27,8 +27,9 @@ class NormalMode:
         ord('0'): "zero",
         ord('$'): "dollar_sign",
         curses.KEY_RESIZE: "render",
-        9: "indent",            # TAB
-        10: "open_below",       # ENTER
+        9: "indent",              # TAB
+        10: "open_below",         # ENTER
+        18: "redo",               # CTRL+R
         (27, 91, 90): "unindent"  # SHIFT-TAB
     }
 
@@ -73,5 +74,5 @@ class NormalMode:
                 elif isinstance(result, str):
                     return (result, {})
             except KeyError:
-                log.error("This command is dogshit")
+                log.error("No command for {}".format(keypress))
                 dict_to_inspect = self.key_mapping

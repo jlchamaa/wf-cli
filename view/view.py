@@ -23,7 +23,6 @@ class LateralCursor:
         )
         current = max(0, self._index)
         res = min(linelength, current)
-        log.info("Comp {}:{}, return {}".format(linelength, current, res))
         return res
 
     def nav_left(self, current_node):

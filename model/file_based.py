@@ -73,13 +73,12 @@ class UserFile:
             json.dump(self.nds.flat_format, f, indent=2)
 
     def commit(self):
-        self.history.add(self.nds, self.cursor_y)
+        self.history.add(self.nds)
 
     # TREE TRAVERSAL
     @property
     def visible(self):
         if self._update:
-            log.info("Recalculating visible")
             self._update = False
             return self.load_visible()
         else:
@@ -230,6 +229,24 @@ class UserFile:
     @update_visible
     def expand_node(self):
         self.visible[self.cursor_y][0].closed = False
+
+    @update_visible
+    def undo(self):
+        old_digest = self.nds.digest
+        ret = self.history.undo()
+        while ret is not None and ret.digest == old_digest:
+            ret = self.history.undo()
+        if ret is not None:
+            self.nds = ret
+
+    @update_visible
+    def redo(self):
+        old_digest = self.nds.digest
+        ret = self.history.redo()
+        while ret is not None and ret.digest == old_digest:
+            ret = self.history.redo()
+        if ret is not None:
+            self.nds = ret
 
     # EDIT TEXT
     @update_visible

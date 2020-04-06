@@ -43,7 +43,6 @@ class ViewModel:
 
     # PRINTING METHODS
     def render(self, **kwargs):
-        log.info("Render")
         self.v.render_content(
             self.visible_nodes,
             self.cursor_y,
@@ -57,12 +56,17 @@ class ViewModel:
         self.m.save()
         log.info("saved")
 
-    def commit_and_save_data(self, **kwargs):
-        self.commit_data()
-        self.save_data()
-
     def undo(self, content={}):
-        log.info("Undo")
+        self.m.undo()
+        self.m.nav_up()
+        self.m.nav_down()
+        self.render()
+
+    def redo(self, content={}):
+        self.m.redo()
+        self.m.nav_up()
+        self.m.nav_down()
+        self.render()
 
     # STATE METHODS
     @property
@@ -116,50 +120,46 @@ class ViewModel:
 
     # EDIT NODE OBJECTS
     def indent(self, **kwargs):
+        self.commit_data()
         self.m.indent()
-        self.commit_and_save_data()
         self.render()
 
     def unindent(self, **kwargs):
+        self.commit_data()
         self.m.unindent()
-        self.commit_and_save_data()
         self.render()
 
     def expand_node(self, **kwargs):
+        self.commit_data()
         self.m.expand_node()
-        self.commit_and_save_data()
         self.render()
 
     def collapse_node(self, **kwargs):
+        self.commit_data()
         self.m.collapse_node()
-        self.commit_and_save_data()
+        self.save_data()
         self.render()
 
     def open_below(self, **kwargs):
+        self.commit_data()
         self.edit_mode()
         self.m.open_below()
         self.nav_down()
-        self.commit_and_save_data()
+        self.save_data()
         self.render()
 
     def complete(self, **kwargs):
+        self.commit_data()
         self.m.complete()
-        self.commit_and_save_data()
+        self.save_data()
         self.render()
 
     def delete_item(self, **kwargs):
         log.info("Delete Item")
+        self.commit_data()
         self.m.delete_item()
-        self.commit_and_save_data()
+        self.save_data()
         self.render()
-
-    def print_data(self, **kwargs):
-        log.info("Visible nodes\n=====")
-        for node, depth in self.visible_nodes:
-            log.info(node)
-        log.info("All nodes\n=====")
-        for key, value in self.m.nodes.items():
-            log.info(value)
 
     # EDIT TEXT
     def add_char(self, char="", **kwargs):
@@ -177,18 +177,19 @@ class ViewModel:
 
     # MODE CHANGING
     def normal_mode(self, **kwargs):
+        self.commit_data()
         log.info("Changing mode to normal")
         self.v.change_mode("normal")
         if not self.v.align_cursor(self.current_node):
             self.nav_left()
-        self.commit_and_save_data()
+        self.save_data()
         self.render()
 
     def edit_mode(self, **kwargs):
+        self.commit_data()
         log.info("Changing mode to edit")
         self.v.align_cursor(self.current_node)
         self.v.change_mode("edit")
-        self.commit_and_save_data()
         self.render()
 
     def edit_EOL(self, **kwargs):

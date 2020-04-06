@@ -1,4 +1,9 @@
+import hashlib
 import uuid
+import logging
+
+
+log = logging.getLogger("wfcli")
 
 
 class Node:
@@ -30,6 +35,21 @@ class Node:
             "cl": self.closed,
             "cp": self.complete,
         }
+
+    @property
+    def digestable_format(self):
+        return [
+            ("pa", self.parent),
+            ("id", self.uuid),
+            ("nm", self.name),
+            ("ch", tuple(self.children)),
+            ("cl", self.closed),
+            ("cp", self.complete),
+        ]
+
+    @property
+    def digest(self):
+        return hash(frozenset(self.digestable_format))
 
     @property
     def is_root(self):
