@@ -75,7 +75,7 @@ class View:
         curses.noecho()
         curses.curs_set(False)
         curses.cbreak()
-        self.sc.nodelay(True)
+        self.sc.timeout(10)
         self.open = True
         self.keygen = self.get_keypress_wait()
         return self
