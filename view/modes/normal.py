@@ -22,6 +22,7 @@ class NormalMode:
         ord('o'): "open_below",
         ord('p'): "print_data",
         ord('q'): "quit_app",
+        ord('r'): "render",
         ord('s'): "save_data",
         ord('u'): "undo",
         ord('0'): "zero",

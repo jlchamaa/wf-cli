@@ -11,11 +11,12 @@ class History:
             self._load_from_history_file(history_file)
         self._redo_list = []
 
+    # need to diagram out where the "current" should be,
+    # where it gets editted, and when it gets stored
+    def 
     def add(self, nds):
-        log.info("we're in the addition")
         if len(self._undo_list) == 0 or nds.digest != self._undo_list[-1].digest:
-            log.info("we've added!")
-            self._undo_list.append(copy.deepcopy(nds))
+            self._undo_list.append(nds)
             self._redo_list = []
             log.info(len(self._undo_list))
 
@@ -34,7 +35,6 @@ class History:
             self._undo_list.append(popped)
             return copy.deepcopy(popped)
         else:
-            print('\a')
             return None
 
     def _load_from_history_file(self, history_file):

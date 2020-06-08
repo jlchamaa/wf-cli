@@ -34,7 +34,6 @@ class NodeStore:
         iterable = [(key, node.digest) for key, node in self.nodes.items()]
         fs = frozenset(iterable)
         res = hash(fs)
-        log.info("iterable: {}\nfs: {}\n Hash: {}".format(iterable, fs, res))
         return res
 
     @property
