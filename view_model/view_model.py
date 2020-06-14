@@ -144,8 +144,6 @@ class ViewModel:
         self.edit_mode()
         self.m.open_below()
         self.nav_down()
-        self.commit_data()
-        self.save_data()
         self.render()
 
     def complete(self, **kwargs):

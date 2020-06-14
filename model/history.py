@@ -4,37 +4,36 @@ log = logging.getLogger("wfcli")
 
 
 class History:
-    def __init__(self, history_file=None):
+    def __init__(self, seed, history_file=None):
+        self.current = copy.deepcopy(seed)
         if history_file is None:
             self._undo_list = []
         else:
             self._load_from_history_file(history_file)
         self._redo_list = []
 
-    # need to diagram out where the "current" should be,
-    # where it gets editted, and when it gets stored
-    def 
     def add(self, nds):
-        if len(self._undo_list) == 0 or nds.digest != self._undo_list[-1].digest:
-            self._undo_list.append(nds)
+        if nds != self.current:
+            self._undo_list.append(self.current)
+            self.current = copy.deepcopy(nds)
             self._redo_list = []
-            log.info(len(self._undo_list))
 
     def undo(self):
         if len(self._undo_list) > 0:
-            popped = self._undo_list.pop()
-            self._redo_list.append(popped)
-            return copy.deepcopy(popped)
+            self._redo_list.append(self.current)
+            self.current = self._undo_list.pop()
+            return copy.deepcopy(self.current)
         else:
             print('\a')
             return None
 
     def redo(self):
         if len(self._redo_list) > 0:
-            popped = self._redo_list.pop()
-            self._undo_list.append(popped)
-            return copy.deepcopy(popped)
+            self._undo_list.append(self.current)
+            self.current = self._redo_list.pop()
+            return copy.deepcopy(self.current)
         else:
+            print('\a')
             return None
 
     def _load_from_history_file(self, history_file):

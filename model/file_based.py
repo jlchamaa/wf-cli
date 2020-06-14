@@ -16,10 +16,10 @@ class UserFile:
     # SETUP METHODS
     def __init__(self):
         self.nds = NodeStore()
-        self.history = History()
         self.cursor_y = 0
         self._load_data()
         self._update = True
+        self.history = History(seed=self.nds)
 
     # Decorator for funtions that need to force an update to our tree
     def update_visible(func):
@@ -232,19 +232,13 @@ class UserFile:
 
     @update_visible
     def undo(self):
-        old_digest = self.nds.digest
         ret = self.history.undo()
-        while ret is not None and ret.digest == old_digest:
-            ret = self.history.undo()
         if ret is not None:
             self.nds = ret
 
     @update_visible
     def redo(self):
-        old_digest = self.nds.digest
         ret = self.history.redo()
-        while ret is not None and ret.digest == old_digest:
-            ret = self.history.redo()
         if ret is not None:
             self.nds = ret
 
