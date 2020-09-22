@@ -20,11 +20,11 @@ class NodeStore:
     def add_node(self, node):
         self.nodes[node.uuid] = node
 
-    def __contains__(self, item):
-        return item in self.nodes
+    def __contains__(self, id):
+        return id in self.nodes
 
-    def __delitem__(self, item):
-        del self.nodes[item]
+    def __delitem__(self, id):
+        del self.nodes[id]
 
     def __len__(self):
         return len(self.nodes)

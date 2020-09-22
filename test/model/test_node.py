@@ -83,6 +83,33 @@ class Test_Node(unittest.TestCase):
         node.closed = True
         self.assertEqual(node.state, "closed")
 
+    def test_digest(self):
+        node = Node(node_def={"pa": "parent", "id": "id", "nm": "nm", "ch": ["C", "N"], "cl": "closed", "cp": "complete"})
+        expected_digest_format = [
+            ("pa", "parent"), ("id", "id"), ("nm", "nm"), ("ch", ("C", "N")), ("cl", "closed"), ("cp", "complete")]
+        self.assertSequenceEqual(node.digestable_format, expected_digest_format)
+        self.assertEqual(frozenset(node.digestable_format), frozenset(expected_digest_format))
+        self.assertEqual(hash(frozenset(node.digestable_format)), hash(frozenset(expected_digest_format)))
+        self.assertEqual(node.digest, hash(frozenset(expected_digest_format)))
+
+    def test_is_root(self):
+        with_parent = Node(pa=None)
+        self.assertTrue(with_parent.is_root)
+        without_parent = Node(pa="A")
+        self.assertFalse(without_parent.is_root)
+
+    def test_state(self):
+        node = Node(pa="A", id="B")
+        self.assertEqual(node.state, "item")
+        node.complete = True
+        self.assertEqual(node.state, "complete_item")
+        node.children.append("CHILD")
+        self.assertEqual(node.state, "complete_parent")
+        node.complete = False
+        self.assertEqual(node.state, "open")
+        node.closed = True
+        self.assertEqual(node.state, "closed")
+
 
 
 if __name__ == "__main__":
