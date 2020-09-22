@@ -44,10 +44,6 @@ class UserFile:
             self.nds.add_node(node)
 
     @classmethod
-    def _data_file_exists(cls):
-        return os.path.exists(cls.DATA_FILE)
-
-    @classmethod
     def _write_data_file(cls, data_obj):
         os.makedirs(os.path.dirname(cls.DATA_FILE), exist_ok=True)
         with open(cls.DATA_FILE, "x+") as f:
@@ -62,7 +58,7 @@ class UserFile:
         cls._write_data_file(empty_data)
 
     def _load_data(self):
-        if not self._data_file_exists():
+        if not os.path.exists(self.DATA_FILE):
             self._create_empty_data_file()
 
         with open(self.DATA_FILE) as f:
@@ -118,15 +114,15 @@ class UserFile:
 
     # LINKING METHODS
     @update_visible
-    def link_parent_child(self, parent, child, position=None):
+    def link_parent_child(self, parent, child, position):
         self.nds.get_node(child).parent = parent
-        if position is not None:
+        if position >= 0:
             self.nds.get_node(parent).children.insert(position, child)
         else:
             self.nds.get_node(parent).children.append(child)
 
     @update_visible
-    def unlink_relink(self, old_parent, child, new_parent, position=None):
+    def unlink_relink(self, old_parent, child, new_parent, position):
         def unlink_parent_child(self, parent, child):
             assert child in self.nds
             assert parent in self.nds
@@ -148,7 +144,7 @@ class UserFile:
             log.info("indent of top child")
         else:
             new_parent = parents_child_list[current_node_index - 1]
-            self.unlink_relink(parent_node, current_node.uuid, new_parent)
+            self.unlink_relink(parent_node, current_node.uuid, new_parent, -1)
             log.info("Nailed it")
 
     @update_visible
@@ -164,7 +160,7 @@ class UserFile:
                 parent_id,
                 current_node.uuid,
                 super_parent_node.uuid,
-                position=pos_in_parent_list + 1,
+                pos_in_parent_list + 1,
             )
             log.info("nailed it")
 
@@ -177,7 +173,7 @@ class UserFile:
             self.link_parent_child(
                 current_node.uuid,
                 new_node.uuid,
-                position=0,
+                0,
             )
 
         else:  # new node is sibling of current node
@@ -187,7 +183,7 @@ class UserFile:
             self.link_parent_child(
                 parent_node.uuid,
                 new_node.uuid,
-                position=pos_in_parent_list + 1,
+                pos_in_parent_list + 1,
             )
 
     @update_visible
@@ -208,7 +204,7 @@ class UserFile:
                 self.link_parent_child(
                     self.root_node_id,
                     new_node.uuid,
-                    position=0,
+                    0,
                 )
 
     @update_visible

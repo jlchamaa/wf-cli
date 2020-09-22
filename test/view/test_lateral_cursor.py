@@ -8,7 +8,6 @@ from model.node_store import NodeStore
 
 
 class Test_LateralCursor(unittest.TestCase):
-
     @mock.patch("model.file_based.UserFile._load_data")
     def setUp(self, mocked_load_data):
         self.vm = ViewModel()
@@ -73,7 +72,8 @@ class Test_LateralCursor(unittest.TestCase):
         self.vm.edit_mode()
         self.assertEqual(self.lc.in_line(nodes[0]), 0)
 
-    def test_normal_does_shift_cursor(self):
+    @mock.patch("view_model.view_model.ViewModel.save_data")
+    def test_normal_does_shift_cursor(self, mock_save_data):
         nodes = self.vm.visible_nodes
         self.vm.nav_right()
         self.assertEqual(self.lc.in_line(nodes[0]), 1)
@@ -81,16 +81,20 @@ class Test_LateralCursor(unittest.TestCase):
         self.assertEqual(self.lc.in_line(nodes[0]), 1)
         self.vm.normal_mode()
         self.assertEqual(self.lc.in_line(nodes[0]), 0)
+        mock_save_data.assert_called_once_with()
 
-    def test_normal_does_shift_cursor_but_not_past_zero(self):
+    @mock.patch("view_model.view_model.ViewModel.save_data")
+    def test_normal_does_shift_cursor_but_not_past_zero(self, mock_save_data):
         nodes = self.vm.visible_nodes
         self.assertEqual(self.lc.in_line(nodes[0]), 0)
         self.vm.edit_mode()
         self.assertEqual(self.lc.in_line(nodes[0]), 0)
         self.vm.normal_mode()
         self.assertEqual(self.lc.in_line(nodes[0]), 0)
+        mock_save_data.assert_called_once_with()
 
-    def test_newline_content(self):
+    @mock.patch("view_model.view_model.ViewModel.save_data")
+    def test_newline_content(self, mock_save_data):
         self.vm.open_below()
         self.vm.add_char(char="a")
         self.vm.add_char(char="b")
@@ -99,8 +103,10 @@ class Test_LateralCursor(unittest.TestCase):
         self.assertEqual(self.lc.in_line(nodes[1]), 3)
         self.vm.normal_mode()
         self.assertEqual(self.lc.in_line(nodes[1]), 2)
+        mock_save_data.assert_called_once_with()
 
-    def test_newline_content_with_backspace(self):
+    @mock.patch("view_model.view_model.ViewModel.save_data")
+    def test_newline_content_with_backspace(self, mock_save_data):
         self.vm.open_below()
         self.vm.add_char(char="a")
         self.vm.add_char(char="b")
@@ -111,3 +117,4 @@ class Test_LateralCursor(unittest.TestCase):
         self.assertEqual(self.lc.in_line(nodes[1]), 3)
         self.vm.normal_mode()
         self.assertEqual(self.lc.in_line(nodes[1]), 2)
+        mock_save_data.assert_called_once_with()

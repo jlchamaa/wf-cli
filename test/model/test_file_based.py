@@ -144,8 +144,15 @@ class Test_UserFile(unittest.TestCase):
         self.uf.load_visible()
         self.assertEqual(len(self.uf.visible), 4)
 
-    def test_indent(self):
-        pass
+    def test_bottom(self):
+        self.uf.cursor_y = 0
+        self.uf.bottom()
+        self.assertEqual(self.uf.cursor_y, 3)
+
+    def test_top(self):
+        self.uf.cursor_y = 2
+        self.uf.top()
+        self.assertEqual(self.uf.cursor_y, 0)
 
 
 if __name__ == "__main__":

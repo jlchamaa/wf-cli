@@ -133,8 +133,8 @@ class View:
                         yield a
                     else:
                         yield (27, a, b)
-
-            yield keypress
+            else:
+                yield keypress
 
     # PRINTING METHODS
     def generate_lines(self, text, text_width):

@@ -10,7 +10,10 @@ class EditMode(NormalMode):
         9: "indent",             # TAB
         10: "open_below",        # ENTER
         (27, 91, 90): "unindent",   # SHIFT-TAB
+        (27, 91, 65): "nav_up",  # UP ARROW
+        (27, 91, 66): "nav_down",  # DOWN ARROW
         (27, 91, 67): "nav_right",  # RIGHT ARROW
+        (27, 91, 68): "nav_left",  # LEFT ARROW
     }
 
     @property
