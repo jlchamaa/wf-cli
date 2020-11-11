@@ -29,6 +29,12 @@ class UserFile:
             return result
         return do_update
 
+    def set_cursor_to_node(self, node_id):
+        self._update = True
+        for i, v in enumerate(self.visible):
+            if v[0].uuid == node_id:
+                self.cursor_y = i
+
     def current_node(self, depth=False):
         node_pair = self.visible[self.cursor_y]
         if depth:
@@ -47,7 +53,7 @@ class UserFile:
     def _write_data_file(cls, data_obj):
         os.makedirs(os.path.dirname(cls.DATA_FILE), exist_ok=True)
         with open(cls.DATA_FILE, "x+") as f:
-            json.dump(data_obj, f)
+            json.dump(data_obj, f, indent=2)
 
     @classmethod
     def _create_empty_data_file(cls):
@@ -145,6 +151,7 @@ class UserFile:
         else:
             new_parent = parents_child_list[current_node_index - 1]
             self.unlink_relink(parent_node, current_node.uuid, new_parent, -1)
+            self.nds.get_node(new_parent).closed = False
             log.info("Nailed it")
 
     @update_visible
@@ -206,6 +213,30 @@ class UserFile:
                     new_node.uuid,
                     0,
                 )
+
+    @update_visible
+    def move_down(self):
+        current_node = self.current_node()
+        parent_id = current_node.parent
+        parents_child_list = self.nds.get_node(parent_id).children
+        current_node_index = parents_child_list.index(current_node.uuid)
+        if current_node_index < len(parents_child_list) - 1:
+            # swap with the one behind
+            parents_child_list[current_node_index] = parents_child_list[current_node_index + 1]
+            parents_child_list[current_node_index + 1] = current_node.uuid
+            self.set_cursor_to_node(current_node.uuid)
+
+    @update_visible
+    def move_up(self):
+        current_node = self.current_node()
+        parent_id = current_node.parent
+        parents_child_list = self.nds.get_node(parent_id).children
+        current_node_index = parents_child_list.index(current_node.uuid)
+        if current_node_index > 0:
+            # swap with the one behind
+            parents_child_list[current_node_index] = parents_child_list[current_node_index - 1]
+            parents_child_list[current_node_index - 1] = current_node.uuid
+            self.set_cursor_to_node(current_node.uuid)
 
     @update_visible
     def complete(self):

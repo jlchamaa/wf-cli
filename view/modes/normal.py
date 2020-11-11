@@ -13,8 +13,10 @@ class NormalMode:
             ord('g'): "top"
         },
         ord('i'): "edit_mode",
+        ord('K'): "move_up",
         ord('k'): "nav_up",
         ord('j'): "nav_down",
+        ord('J'): "move_down",
         ord('h'): "nav_left",
         ord('l'): "nav_right",
         ord('H'): "collapse_node",

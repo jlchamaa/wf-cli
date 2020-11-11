@@ -1,6 +1,6 @@
 #!/usr/bin/env python3.6
 import unittest
-import unittest.mock as mock
+from unittest.mock import patch, Mock, ANY
 
 from model.file_based import UserFile
 from model.model_node import Node
@@ -8,7 +8,7 @@ from model.node_store import NodeStore
 
 
 class Test_UserFile(unittest.TestCase):
-    @mock.patch("model.file_based.UserFile._load_data")
+    @patch("model.file_based.UserFile._load_data")
     def setUp(self, mocked_load_data):
         self.uf = UserFile()
         mocked_load_data.assert_called_once()
@@ -153,6 +153,19 @@ class Test_UserFile(unittest.TestCase):
         self.uf.cursor_y = 2
         self.uf.top()
         self.assertEqual(self.uf.cursor_y, 0)
+
+    def test_data_from_fo(self):
+        fo = Mock()
+        self.assertEqual(len(self.uf.nds), 5)
+        fo.read.return_value = '''[{"pa": "4"}]'''
+        self.uf.data_from_file_object(fo)
+        self.assertEqual(len(self.uf.nds), 6)
+
+    @patch("model.file_based.open")
+    @patch("model.file_based.os.makedirs")
+    def test_write_data_file(self, mock_makedirs, mock_open):
+        self.uf._write_data_file({"hi": "bye"})
+        mock_makedirs.assert_called_once_with(ANY, exist_ok=True)
 
 
 if __name__ == "__main__":

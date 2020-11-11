@@ -146,6 +146,18 @@ class ViewModel:
         self.nav_down()
         self.render()
 
+    def move_up(self, **kwargs):
+        self.m.move_up()
+        self.commit_data()
+        self.save_data()
+        self.render()
+
+    def move_down(self, **kwargs):
+        self.m.move_down()
+        self.commit_data()
+        self.save_data()
+        self.render()
+
     def complete(self, **kwargs):
         self.m.complete()
         self.commit_data()
