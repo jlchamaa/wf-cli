@@ -1,5 +1,5 @@
 import logging
-from model.file_based import UserFile
+from model.file_based import UserFile, ModelException
 from view.view import View
 
 
@@ -34,7 +34,7 @@ class ViewModel:
                         len(payload),
                         payload,
                     ))
-            except AttributeError as ae:
+            except ModelException as ae:
                 log.error("Command: {}\nError:{}".format(payload[0], ae))
 
     def quit_app(self, **kwargs):

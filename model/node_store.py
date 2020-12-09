@@ -12,7 +12,10 @@ class NodeStore:
         self.nodes = {}
 
     def __eq__(self, other_nds):
-        return self.digest == other_nds.digest
+        try:
+            return self.digest == other_nds.digest
+        except Exception:
+            return False
 
     def get_node(self, node_id):
         return self.nodes[node_id]

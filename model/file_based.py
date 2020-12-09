@@ -9,6 +9,10 @@ from model.node_store import NodeStore
 log = logging.getLogger("wfcli")
 
 
+class ModelException(Exception):
+    pass
+
+
 class UserFile:
     DATA_FILE = os.path.expanduser("~/.cache/.wfclidata")
     root_node_id = "0"
@@ -22,15 +26,18 @@ class UserFile:
         self.history = History(seed=self.nds)
 
     # Decorator for funtions that need to force an update to our tree
-    def update_visible(func):
+    def update_visible_after(func):
         def do_update(self, *args, **kwargs):
             result = func(self, *args, **kwargs)
             self._update = True
             return result
         return do_update
 
-    def set_cursor_to_node(self, node_id):
+    def update_visible_now(self):
         self._update = True
+
+    def set_cursor_to_node(self, node_id):
+        self.update_visible_now()
         for i, v in enumerate(self.visible):
             if v[0].uuid == node_id:
                 self.cursor_y = i
@@ -119,15 +126,15 @@ class UserFile:
         self.cursor_y = 0
 
     # LINKING METHODS
-    @update_visible
-    def link_parent_child(self, parent, child, position):
+    @update_visible_after
+    def link_parent_child(self, parent, child, position=-1):
         self.nds.get_node(child).parent = parent
         if position >= 0:
             self.nds.get_node(parent).children.insert(position, child)
         else:
             self.nds.get_node(parent).children.append(child)
 
-    @update_visible
+    @update_visible_after
     def unlink_relink(self, old_parent, child, new_parent, position):
         def unlink_parent_child(self, parent, child):
             assert child in self.nds
@@ -140,26 +147,26 @@ class UserFile:
         self.link_parent_child(new_parent, child, position)
 
     # MANIPULATE NODES
-    @update_visible
+    @update_visible_after
     def indent(self):
         current_node = self.current_node()
         parent_node = current_node.parent
         parents_child_list = self.nds.get_node(parent_node).children
         current_node_index = parents_child_list.index(current_node.uuid)
         if current_node_index == 0:
-            log.info("indent of top child")
+            raise ModelException("Indent of top child")
         else:
             new_parent = parents_child_list[current_node_index - 1]
             self.unlink_relink(parent_node, current_node.uuid, new_parent, -1)
             self.nds.get_node(new_parent).closed = False
             log.info("Nailed it")
 
-    @update_visible
+    @update_visible_after
     def unindent(self):
         current_node = self.current_node()
         parent_id = current_node.parent
         if parent_id == self.root_node_id:
-            log.info("top level, no unindent")
+            raise ModelException("top level, can't unindent")
         else:
             super_parent_node = self.nds.get_node(self.nds.get_node(parent_id).parent)
             pos_in_parent_list = super_parent_node.children.index(parent_id)
@@ -171,10 +178,9 @@ class UserFile:
             )
             log.info("nailed it")
 
-    @update_visible
+    @update_visible_after
     def open_below(self):
         current_node = self.current_node()
-
         if current_node.state == "open":
             new_node = self.create_node(current_node.uuid)
             self.link_parent_child(
@@ -182,7 +188,6 @@ class UserFile:
                 new_node.uuid,
                 0,
             )
-
         else:  # new node is sibling of current node
             parent_node = self.nds.get_node(current_node.parent)
             new_node = self.create_node(parent_node.uuid)
@@ -193,7 +198,7 @@ class UserFile:
                 pos_in_parent_list + 1,
             )
 
-    @update_visible
+    @update_visible_after
     def delete_item(self, node_id=None):
         current_node = self.current_node() if node_id is None else self.nds.get_node(node_id)
         for child_id in current_node.children[:]:
@@ -214,7 +219,7 @@ class UserFile:
                     0,
                 )
 
-    @update_visible
+    @update_visible_after
     def move_down(self):
         current_node = self.current_node()
         parent_id = current_node.parent
@@ -226,7 +231,7 @@ class UserFile:
             parents_child_list[current_node_index + 1] = current_node.uuid
             self.set_cursor_to_node(current_node.uuid)
 
-    @update_visible
+    @update_visible_after
     def move_up(self):
         current_node = self.current_node()
         parent_id = current_node.parent
@@ -238,45 +243,45 @@ class UserFile:
             parents_child_list[current_node_index - 1] = current_node.uuid
             self.set_cursor_to_node(current_node.uuid)
 
-    @update_visible
+    @update_visible_after
     def complete(self):
         current_node = self.current_node()
         current_node.complete = not current_node.complete
 
-    @update_visible
+    @update_visible_after
     def create_node(self, parent, **kwargs):
         node = Node(pa=parent, **kwargs)
         self.nds.add_node(node)
         return node
 
-    @update_visible
+    @update_visible_after
     def collapse_node(self):
         self.visible[self.cursor_y][0].closed = True
 
-    @update_visible
+    @update_visible_after
     def expand_node(self):
         self.visible[self.cursor_y][0].closed = False
 
-    @update_visible
+    @update_visible_after
     def undo(self):
         ret = self.history.undo()
         if ret is not None:
             self.nds = ret
 
-    @update_visible
+    @update_visible_after
     def redo(self):
         ret = self.history.redo()
         if ret is not None:
             self.nds = ret
 
     # EDIT TEXT
-    @update_visible
+    @update_visible_after
     def add_char(self, char, cursor_x):
         current_node = self.current_node()
         name = current_node.name[0:cursor_x] + char + current_node.name[cursor_x:]
         current_node.name = name
 
-    @update_visible
+    @update_visible_after
     def delete_char(self, num, cursor_x):
         current_node = self.current_node()
         if cursor_x > 0:
