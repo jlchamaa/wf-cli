@@ -179,6 +179,18 @@ class UserFile:
             log.info("nailed it")
 
     @update_visible_after
+    def open_above(self):
+        current_node = self.current_node()
+        parent_node = self.nds.get_node(current_node.parent)
+        new_node = self.create_node(parent_node.uuid)
+        pos_in_parent_list = parent_node.children.index(current_node.uuid)
+        self.link_parent_child(
+            parent_node.uuid,
+            new_node.uuid,
+            pos_in_parent_list,
+        )
+
+    @update_visible_after
     def open_below(self):
         current_node = self.current_node()
         if current_node.state == "open":

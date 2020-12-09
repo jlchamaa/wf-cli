@@ -238,6 +238,13 @@ class Test_UserFile(unittest.TestCase):
             ["3", "4"],
         )
 
+    def test_open_above(self):
+        self.uf.open_above()
+        root_children = self.uf.nds.get_node("0").children
+        self.assertEqual(len(root_children), 3)
+        self.assertEqual(root_children[1], "1")
+        self.assertEqual(root_children[2], "2")
+
     def test_open_below_open(self):
         self.uf.set_cursor_to_node("2")
         self.uf.open_below()

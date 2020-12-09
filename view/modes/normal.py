@@ -21,6 +21,7 @@ class NormalMode:
         ord('l'): "nav_right",
         ord('H'): "collapse_node",
         ord('L'): "expand_node",
+        ord('O'): "open_above",
         ord('o'): "open_below",
         ord('p'): "print_data",
         ord('q'): "quit_app",

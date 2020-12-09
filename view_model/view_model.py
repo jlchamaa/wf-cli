@@ -140,6 +140,11 @@ class ViewModel:
         self.save_data()
         self.render()
 
+    def open_above(self, **kwargs):
+        self.edit_mode()
+        self.m.open_above()
+        self.render()
+
     def open_below(self, **kwargs):
         self.edit_mode()
         self.m.open_below()
