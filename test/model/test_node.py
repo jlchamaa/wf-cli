@@ -86,7 +86,7 @@ class Test_Node(unittest.TestCase):
     def test_digest(self):
         node = Node(node_def={"pa": "parent", "id": "id", "nm": "nm", "ch": ["C", "N"], "cl": "closed", "cp": "complete"})
         expected_digest_format = [
-            ("pa", "parent"), ("id", "id"), ("nm", "nm"), ("ch", ("C", "N")), ("cl", "closed"), ("cp", "complete")]
+            ("pa", "parent"), ("id", "id"), ("nm", "nm"), ("ch", ("C", "N")), ("cl", "closed"), ("cp", "complete"), ("cn", None), ("cs", tuple())]
         self.assertSequenceEqual(node.digestable_format, expected_digest_format)
         self.assertEqual(frozenset(node.digestable_format), frozenset(expected_digest_format))
         self.assertEqual(hash(frozenset(node.digestable_format)), hash(frozenset(expected_digest_format)))

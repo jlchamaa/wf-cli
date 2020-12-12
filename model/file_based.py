@@ -3,14 +3,11 @@ import json
 import logging
 import os
 from model.model_node import Node
+from model.exceptions import ModelException
 from model.history import History
 from model.node_store import NodeStore
 
 log = logging.getLogger("wfcli")
-
-
-class ModelException(Exception):
-    pass
 
 
 class UserFile:
@@ -23,6 +20,7 @@ class UserFile:
         self.cursor_y = 0
         self._load_data()
         self._update = True
+        self._clipboard_node = None
         self.history = History(seed=self.nds)
 
     # Decorator for funtions that need to force an update to our tree
@@ -56,6 +54,11 @@ class UserFile:
             node = Node(node_def=node_def)
             self.nds.add_node(node)
 
+    def instantiate_clone_names(self):
+        for node_id, node_data in self.nds.items():
+            if node_data.is_clone:
+                node_data.clone_node = self.nds.get_node(node_data.cloning)
+
     @classmethod
     def _write_data_file(cls, data_obj):
         os.makedirs(os.path.dirname(cls.DATA_FILE), exist_ok=True)
@@ -76,6 +79,7 @@ class UserFile:
 
         with open(self.DATA_FILE) as f:
             self.data_from_file_object(f)
+            self.instantiate_clone_names()
 
     def save(self):
         with open(self.DATA_FILE, "w") as f:
@@ -95,7 +99,7 @@ class UserFile:
 
     def load_visible(self):
         """
-        returns a list of tuples like this ( node, depth,)
+        returns a list of tuples like this (node, depth,)
         """
         self._visible = []
         for node in self.nds.get_node(self.root_node_id).children:
@@ -266,6 +270,20 @@ class UserFile:
         self.nds.add_node(node)
         return node
 
+    def create_clone_of(self, cloning_id, new_parent, new_position=0):
+        node_being_cloned = self.nds.get_node(cloning_id)
+        clone_node = self.create_node(
+            new_parent,
+            nm="",
+            cn=cloning_id,
+        )
+        clone_node.clone_node = node_being_cloned
+        node_being_cloned = self.nds.get_node(cloning_id)
+        node_being_cloned.clones.append(clone_node.uuid)
+        self.link_parent_child(new_parent, clone_node.uuid, new_position)
+        for child in node_being_cloned.children:
+            self.create_clone_of(child, clone_node.uuid)
+
     @update_visible_after
     def collapse_node(self):
         self.visible[self.cursor_y][0].closed = True
@@ -299,3 +317,19 @@ class UserFile:
         if cursor_x > 0:
             name = current_node.name[0:cursor_x - num] + current_node.name[cursor_x:]
             current_node.name = name
+
+    def yank(self):
+        current_node = self.current_node()
+        self._clipboard_node = current_node.uuid
+
+    @update_visible_after
+    def paste(self):
+        current_node = self.current_node()
+        parent_node_id = self.nds.get_node(current_node.uuid).parent
+        parent_node = self.nds.get_node(parent_node_id)
+        pos = parent_node.children.index(current_node.uuid) + 1
+        self.create_clone_of(
+            self._clipboard_node,
+            parent_node_id,
+            pos,
+        )

@@ -24,18 +24,15 @@ class ViewModel:
 
     def recieve_commands(self):
         for payload in self.v.send_command():
-            try:
-                if len(payload) == 2:  # payload has a kwargs
-                    getattr(self, payload[0])(**payload[1])
-                elif len(payload) == 1:  # payload is just a command
-                    getattr(self, payload[0])()
-                else:
-                    raise ValueError("Payload of len {}, {}".format(
-                        len(payload),
-                        payload,
-                    ))
-            except ModelException as ae:
-                log.error("Command: {}\nError:{}".format(payload[0], ae))
+            if len(payload) == 2:  # payload has a kwargs
+                getattr(self, payload[0])(**payload[1])
+            elif len(payload) == 1:  # payload is just a command
+                getattr(self, payload[0])()
+            else:
+                raise ValueError("Payload of len {}, {}".format(
+                    len(payload),
+                    payload,
+                ))
 
     def quit_app(self, **kwargs):
         self.v.open = False
@@ -120,14 +117,20 @@ class ViewModel:
 
     # EDIT NODE OBJECTS
     def indent(self, **kwargs):
-        self.m.indent()
-        self.commit_data()
-        self.render()
+        try:
+            self.m.indent()
+            self.commit_data()
+            self.render()
+        except ModelException as me:
+            log.error(me.msg)
 
     def unindent(self, **kwargs):
-        self.m.unindent()
-        self.commit_data()
-        self.render()
+        try:
+            self.m.unindent()
+            self.commit_data()
+            self.render()
+        except ModelException as me:
+            log.error(me.msg)
 
     def expand_node(self, **kwargs):
         self.m.expand_node()
@@ -209,4 +212,14 @@ class ViewModel:
     def edit_EOL(self, **kwargs):
         self.edit_mode()
         self.dollar_sign()
+        self.render()
+
+    def yank(self, **kwargs):
+        self.m.yank()
+
+    def paste(self, **kwargs):
+        self.m.paste()
+        self.nav_down()
+        self.commit_data()
+        self.save_data()
         self.render()

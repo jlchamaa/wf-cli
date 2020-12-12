@@ -358,6 +358,23 @@ class Test_UserFile(unittest.TestCase):
         self.uf.redo()
         self.assertEqual(self.uf.nds, "fake_result")
 
+    def test_paste(self):
+        self.uf._clipboard_node = "3"
+        self.uf.set_cursor_to_node("4")
+        # from pudb.remote import set_trace
+        # set_trace(term_size=(100, 50))
+        self.uf.paste()
+        self.assertEqual(
+            len(self.uf.nds.get_node("2").children),
+            3,
+        )
+        self.assertEqual(
+            self.uf.nds.get_node("2").children[0:2],
+            ["3", "4"],
+        )
+        third_node = self.uf.nds.get_node(self.uf.nds.get_node("2").children[2])
+        self.assertTrue(third_node.is_clone)
+
     @patch("model.file_based.UserFile.data_from_file_object")
     @patch("model.file_based.open")
     @patch("model.file_based.UserFile._create_empty_data_file")
@@ -395,6 +412,33 @@ class Test_UserFile(unittest.TestCase):
     def test_write_data_file(self, mock_makedirs, mock_open):
         self.uf._write_data_file({"hi": "bye"})
         mock_makedirs.assert_called_once_with(ANY, exist_ok=True)
+
+
+class TestPlainClones(unittest.TestCase):
+    @patch("model.file_based.UserFile._load_data")
+    def setUp(self, mocked_load_data):
+        self.uf = UserFile()
+        mocked_load_data.assert_called_once()
+        self.assertEqual(0, len(self.uf.nds))
+        test_data = [
+            {"id": "0", "nm": "root", "cl": False, "ch": ["1", "2"], "pa": None},
+            {"id": "1", "nm": "henlo", "cl": False, "ch": [], "pa": "0", "cs": ["2"]},
+            {"id": "2", "nm": "Clone", "cl": False, "ch": [], "pa": "0", "cn": "1"},
+        ]
+        nds = NodeStore()
+        for node_def in test_data:
+            nds.add_node(Node(node_def))
+        self.uf.nds = nds
+        self.uf.instantiate_clone_names()
+        self.assertEqual(3, len(self.uf.nds))
+
+    def test_visible(self):
+        self.assertEqual(2, len(self.uf.visible))
+
+    def test_edit_original_changes_clone(self):
+        viz = self.uf.visible
+        self.assertEqual(viz[0][0].name, "henlo")
+        self.assertEqual(viz[1][0].name, "henlo")
 
 
 if __name__ == "__main__":

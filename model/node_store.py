@@ -32,6 +32,9 @@ class NodeStore:
     def __len__(self):
         return len(self.nodes)
 
+    def items(self):
+        return self.nodes.items()
+
     @property
     def digest(self):
         iterable = [(key, node.digest) for key, node in self.nodes.items()]
