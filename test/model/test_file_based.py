@@ -7,6 +7,12 @@ from model.model_node import Node
 
 
 class Test_UserFile(unittest.TestCase):
+    def gn(self, node_id):
+        return self.uf.nds.get_node(node_id)
+
+    def gns(self, node_ids):
+        return [self.uf.nds.get_node(node_id) for node_id in node_ids]
+
     @patch("model.file_based.UserFile._load_data")
     def setUp(self, mocked_load_data):
         self.uf = UserFile()
@@ -27,17 +33,17 @@ class Test_UserFile(unittest.TestCase):
 
     def test_traverse_small(self):
         self.uf._visible = []
-        self.uf._traverse_node("2", 0)
+        self.uf._traverse_node(self.gn("2"), 0)
         self.assertEqual(len(self.uf._visible), 3)
 
     def test_traverse_single(self):
         self.uf._visible = []
-        self.uf._traverse_node("4", 0)
+        self.uf._traverse_node(self.gn("4"), 0)
         self.assertEqual(len(self.uf._visible), 1)
 
     def test_create_node(self):
         node = self.uf.create_node("parent")
-        self.assertIs(node, self.uf.nds.get_node(node.uuid))
+        self.assertIs(node, self.gn(node.uuid))
 
     def test_close_open_item(self):
         self.uf.load_visible()
@@ -48,8 +54,9 @@ class Test_UserFile(unittest.TestCase):
         self.assertEqual(len(self.uf.visible), 2)
 
     def test_close_open_compound_item(self):
-        self.uf.nds.add_node(Node({"id": "5", "nm": "fifth", "pa": "4"}))
-        self.uf.nds.get_node("4").children.append("5")
+        new_node = Node({"id": "5", "nm": "fifth", "pa": "4"})
+        self.uf.nds.add_node(new_node)
+        self.gn("4").children.append(new_node)
         self.uf.load_visible()
         self.assertEqual(len(self.uf.visible), 5)
         self.uf.cursor_y = 1
@@ -58,7 +65,7 @@ class Test_UserFile(unittest.TestCase):
         self.assertEqual(len(self.uf.visible), 2)
 
     def test_close_closed_item(self):
-        self.uf.nds.get_node("2").closed = True
+        self.gn("2").closed = True
         self.uf.load_visible()
         self.assertEqual(len(self.uf.visible), 2)
         self.uf.cursor_y = 1
@@ -75,7 +82,7 @@ class Test_UserFile(unittest.TestCase):
         self.assertEqual(len(self.uf.visible), 4)
 
     def test_open_closed_item(self):
-        self.uf.nds.get_node("2").closed = True
+        self.gn("2").closed = True
         self.uf.load_visible()
         self.assertEqual(len(self.uf.visible), 2)
         self.uf.cursor_y = 1
@@ -86,7 +93,7 @@ class Test_UserFile(unittest.TestCase):
     def test_open_open_item(self):
         self.uf.load_visible()
         self.assertEqual(len(self.uf.visible), 4)
-        self.assertFalse(self.uf.nds.get_node("2").closed)
+        self.assertFalse(self.gn("2").closed)
         self.uf.cursor_y = 1
         self.uf.expand_node()
         self.uf.load_visible()
@@ -94,9 +101,10 @@ class Test_UserFile(unittest.TestCase):
 
     def test_open_compound_closed_open_item(self):
         # cursor is closed, but children are open
-        self.uf.nds.add_node(Node({"id": "5", "nm": "fifth", "pa": "4"}))
-        self.uf.nds.get_node("4").children.append("5")
-        self.uf.nds.get_node("2").closed = True
+        new_node = Node({"id": "5", "nm": "fifth", "pa": "4"})
+        self.uf.nds.add_node(new_node)
+        self.gn("4").children.append(new_node)
+        self.gn("2").closed = True
         self.uf.load_visible()
         self.assertEqual(len(self.uf.visible), 2)
         self.uf.cursor_y = 1
@@ -107,12 +115,13 @@ class Test_UserFile(unittest.TestCase):
     def test_open_compound_closed_closed_item(self):
         # cursor is closed, but children are also closed
         # should only open up the main, not the children
-        self.uf.nds.add_node(Node({"id": "5", "nm": "fifth", "pa": "4"}))
-        self.uf.nds.get_node("4").children.append("5")
+        new_node = Node({"id": "5", "nm": "fifth", "pa": "4"})
+        self.uf.nds.add_node(new_node)
+        self.gn("4").children.append(new_node)
         self.uf.load_visible()
         self.assertEqual(len(self.uf.visible), 5)
-        self.uf.nds.get_node("2").closed = True
-        self.uf.nds.get_node("4").closed = True
+        self.gn("2").closed = True
+        self.gn("4").closed = True
         self.uf.load_visible()
         self.assertEqual(len(self.uf.visible), 2)
         self.uf.cursor_y = 1
@@ -122,9 +131,10 @@ class Test_UserFile(unittest.TestCase):
 
     def test_open_compound_closed_item(self):
         # cursor is closed, but children are open
-        self.uf.nds.add_node(Node({"id": "5", "nm": "fifth", "pa": "4"}))
-        self.uf.nds.get_node("4").children.append("5")
-        self.uf.nds.get_node("2").closed = True
+        new_node = Node({"id": "5", "nm": "fifth", "pa": "4"})
+        self.uf.nds.add_node(new_node)
+        self.gn("4").children.append(new_node)
+        self.gn("2").closed = True
         self.uf.load_visible()
         self.assertEqual(len(self.uf.visible), 2)
         self.uf.cursor_y = 1
@@ -150,12 +160,6 @@ class Test_UserFile(unittest.TestCase):
         self.uf.top()
         self.assertEqual(self.uf.cursor_y, 0)
 
-    def test_data_from_fo(self):
-        fo = [{"pa": "4"}]
-        self.assertEqual(len(self.uf.nds), 5)
-        self.uf.data_from_flat_object(fo)
-        self.assertEqual(len(self.uf.nds), 6)
-
     def test_cursor_to_node(self):
         self.assertEqual(self.uf.cursor_y, 0)
         self.uf.set_cursor_to_node("3")
@@ -163,27 +167,35 @@ class Test_UserFile(unittest.TestCase):
 
     def test_link_parent_child_particular_position(self):
         self.assertEqual(len(self.uf.visible), 4)
-        found_children = self.uf.nds.get_node("0").children
-        self.assertEqual(found_children, ["1", "2"])
-        self.uf.link_parent_child("0", "2", 0)
+        self.assertEqual(
+            self.gn("0").children,
+            self.gns(["1", "2"]),
+        )
+        self.uf.link_parent_child(self.gn("0"), self.gn("2"), 0)
         self.assertEqual(len(self.uf.visible), 7)
-        found_children = self.uf.nds.get_node("0").children
-        self.assertEqual(found_children, ["2", "1", "2"])
+        self.assertEqual(
+            self.gn("0").children,
+            self.gns(["2", "1", "2"]),
+        )
 
     def test_link_parent_child_no_position(self):
         self.assertEqual(len(self.uf.visible), 4)
-        found_children = self.uf.nds.get_node("0").children
-        self.assertEqual(found_children, ["1", "2"])
-        self.uf.link_parent_child("0", "3")
+        self.assertEqual(
+            self.gn("0").children,
+            self.gns(["1", "2"]),
+        )
+        self.uf.link_parent_child(self.gn("0"), self.gn("3"))
         self.assertEqual(len(self.uf.visible), 5)
-        found_children = self.uf.nds.get_node("0").children
-        self.assertEqual(found_children, ["1", "2", "3"])
+        self.assertEqual(
+            self.gn("0").children,
+            self.gns(["1", "2", "3"]),
+        )
 
     def test_unlink_relink(self):
-        self.uf.unlink_relink("2", "3", "0", 0)
+        self.uf.unlink_relink(self.gn("2"), self.gn("3"), self.gn("0"), 0)
         self.assertEqual(
-            self.uf.nds.get_node("0").children,
-            ["3", "1", "2"],
+            self.gn("0").children,
+            self.gns(["3", "1", "2"]),
         )
 
     def test_indent_top_sibling(self):
@@ -192,32 +204,32 @@ class Test_UserFile(unittest.TestCase):
             self.uf.indent()
         # Should not have changed anything
         self.assertEqual(
-            self.uf.nds.get_node("0").children,
-            ["1", "2"],
+            self.gn("0").children,
+            self.gns(["1", "2"]),
         )
 
     def test_indent_second_sibling(self):
         self.uf.set_cursor_to_node("2")
         self.uf.indent()
         self.assertEqual(
-            self.uf.nds.get_node("0").children,
-            ["1"],
+            self.gn("0").children,
+            [self.gn("1")],
         )
         self.assertEqual(
-            self.uf.nds.get_node("1").children,
-            ["2"],
+            self.gn("1").children,
+            [self.gn("2")],
         )
 
     def test_unindent_not_top(self):
         self.uf.set_cursor_to_node("3")
         self.uf.unindent()
         self.assertEqual(
-            self.uf.nds.get_node("0").children,
-            ["1", "2", "3"],
+            self.gn("0").children,
+            self.gns(["1", "2", "3"]),
         )
         self.assertEqual(
-            self.uf.nds.get_node("2").children,
-            ["4"],
+            self.gn("2").children,
+            [self.gn("4")],
         )
 
     def test_unindent_top(self):
@@ -225,48 +237,48 @@ class Test_UserFile(unittest.TestCase):
         with self.assertRaises(ModelException):
             self.uf.unindent()
         self.assertEqual(
-            self.uf.nds.get_node("0").children,
-            ["1", "2"],
+            self.gn("0").children,
+            self.gns(["1", "2"]),
         )
         self.assertEqual(
-            self.uf.nds.get_node("2").children,
-            ["3", "4"],
+            self.gn("2").children,
+            self.gns(["3", "4"]),
         )
 
     def test_open_above(self):
         self.uf.open_above()
-        root_children = self.uf.nds.get_node("0").children
+        root_children = self.gn("0").children
         self.assertEqual(len(root_children), 3)
-        self.assertEqual(root_children[1], "1")
-        self.assertEqual(root_children[2], "2")
+        self.assertEqual(root_children[1], self.gn("1"))
+        self.assertEqual(root_children[2], self.gn("2"))
 
     def test_open_below_open(self):
         self.uf.set_cursor_to_node("2")
         self.uf.open_below()
-        n2s_children = self.uf.nds.get_node("2").children
+        n2s_children = self.gn("2").children
         self.assertEqual(len(n2s_children), 3)
-        self.assertEqual(n2s_children[1:], ["3", "4"])
+        self.assertEqual(n2s_children[1:], self.gns(["3", "4"]))
 
     def test_open_below_item(self):
         self.uf.open_below()
-        root_children = self.uf.nds.get_node("0").children
+        root_children = self.gn("0").children
         self.assertEqual(len(root_children), 3)
-        self.assertEqual(root_children[0], "1")
-        self.assertEqual(root_children[2], "2")
+        self.assertEqual(root_children[0], self.gn("1"))
+        self.assertEqual(root_children[2], self.gn("2"))
 
     def test_delete_single_item_from_cursor(self):
         self.uf.delete_item()
         self.assertEqual(
-            self.uf.nds.get_node("0").children,
-            ["2"],
+            self.gn("0").children,
+            self.gns(["2"]),
         )
         self.assertNotIn("1", self.uf.nds)
 
     def test_delete_single_item_from_id(self):
         self.uf.delete_item("1")
         self.assertEqual(
-            self.uf.nds.get_node("0").children,
-            ["2"],
+            self.gn("0").children,
+            self.gns(["2"]),
         )
         self.assertNotIn("1", self.uf.nds)
 
@@ -274,8 +286,8 @@ class Test_UserFile(unittest.TestCase):
         self.uf.set_cursor_to_node("2")
         self.uf.delete_item()
         self.assertEqual(
-            self.uf.nds.get_node("0").children,
-            ["1"],
+            self.gn("0").children,
+            self.gns(["1"]),
         )
         self.assertNotIn("2", self.uf.nds)
         self.assertNotIn("3", self.uf.nds)
@@ -285,8 +297,8 @@ class Test_UserFile(unittest.TestCase):
     def test_delete_nested_item_from_id(self):
         self.uf.delete_item("2")
         self.assertEqual(
-            self.uf.nds.get_node("0").children,
-            ["1"],
+            self.gn("0").children,
+            self.gns(["1"]),
         )
         self.assertNotIn("2", self.uf.nds)
         self.assertNotIn("3", self.uf.nds)
@@ -302,31 +314,31 @@ class Test_UserFile(unittest.TestCase):
     def test_move_down(self):
         self.uf.move_down()
         self.assertEqual(
-            self.uf.nds.get_node("0").children,
-            ["2", "1"],
+            self.gn("0").children,
+            self.gns(["2", "1"]),
         )
         self.assertEqual(self.uf.cursor_y, 3)
         self.uf.move_down()  # should no-op
         self.assertEqual(
-            self.uf.nds.get_node("0").children,
-            ["2", "1"],
+            self.gn("0").children,
+            self.gns(["2", "1"]),
         )
 
     def test_move_up(self):
         self.uf.move_up()  # should no-op
         self.assertEqual(
-            self.uf.nds.get_node("0").children,
-            ["1", "2"],
+            self.gn("0").children,
+            self.gns(["1", "2"]),
         )
         self.uf.set_cursor_to_node("2")
         self.uf.move_up()
         self.assertEqual(
-            self.uf.nds.get_node("0").children,
-            ["2", "1"],
+            self.gn("0").children,
+            self.gns(["2", "1"]),
         )
 
     def test_complete(self):
-        node_1 = self.uf.nds.get_node("1")
+        node_1 = self.gn("1")
         self.assertEqual(node_1.complete, False)
         self.uf.complete()
         self.assertEqual(node_1.complete, True)
@@ -356,18 +368,16 @@ class Test_UserFile(unittest.TestCase):
     def test_paste(self):
         self.uf._clipboard_node = "3"
         self.uf.set_cursor_to_node("4")
-        # from pudb.remote import set_trace
-        # set_trace(term_size=(100, 50))
         self.uf.paste()
         self.assertEqual(
-            len(self.uf.nds.get_node("2").children),
+            len(self.gn("2").children),
             3,
         )
         self.assertEqual(
-            self.uf.nds.get_node("2").children[0:2],
-            ["3", "4"],
+            self.gn("2").children[0:2],
+            self.gns(["3", "4"]),
         )
-        third_node = self.uf.nds.get_node(self.uf.nds.get_node("2").children[2])
+        third_node = self.gn(self.gn("2").children[2])
         self.assertTrue(third_node.is_clone)
 
     @patch("model.file_based.UserFile.data_from_flat_object")

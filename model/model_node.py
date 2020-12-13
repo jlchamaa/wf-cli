@@ -28,15 +28,20 @@ class Node:
         )
 
     def flatify(self, attr):
-        # Let's let it slide for now
-        return attr
+        if attr is None:
+            return None
         if isinstance(attr, Node):
             return attr.uuid
         else:
             return [node.uuid for node in attr]
 
     def normalize(self, node_store):
-        pass
+        if self._parent is not None:
+            self._parent = node_store.get_node(self._parent)
+        self._children = [node_store.get_node(node_id) for node_id in self._children]
+        if self._cloning is not None:
+            self._cloning = node_store.get_node(self._cloning)
+        self._clones = [node_store.get_node(node_id) for node_id in self._clones]
 
     """
     ### Accessor properties
@@ -61,13 +66,13 @@ class Node:
     @property
     def name(self):
         if self.is_clone:
-            return self.clone_node.name
+            return self.cloning.name
         return self._name
 
     @name.setter
     def name(self, x):
         if self.is_clone:
-            self.clone_node.name = x
+            self.cloning.name = x
         self._name = x
 
     @property
