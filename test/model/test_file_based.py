@@ -11,7 +11,7 @@ class Test_UserFile(unittest.TestCase):
         return self.uf.nds.get_node(node_id)
 
     def gns(self, node_ids):
-        return [self.uf.nds.get_node(node_id) for node_id in node_ids]
+        return tuple(self.uf.nds.get_node(node_id) for node_id in node_ids)
 
     @patch("model.file_based.UserFile._load_data")
     def setUp(self, mocked_load_data):
@@ -56,7 +56,7 @@ class Test_UserFile(unittest.TestCase):
     def test_close_open_compound_item(self):
         new_node = Node({"id": "5", "nm": "fifth", "pa": "4"})
         self.uf.nds.add_node(new_node)
-        self.gn("4").children.append(new_node)
+        self.gn("4").add_child(new_node)
         self.uf.load_visible()
         self.assertEqual(len(self.uf.visible), 5)
         self.uf.cursor_y = 1
@@ -103,7 +103,7 @@ class Test_UserFile(unittest.TestCase):
         # cursor is closed, but children are open
         new_node = Node({"id": "5", "nm": "fifth", "pa": "4"})
         self.uf.nds.add_node(new_node)
-        self.gn("4").children.append(new_node)
+        self.gn("4").add_child(new_node)
         self.gn("2").closed = True
         self.uf.load_visible()
         self.assertEqual(len(self.uf.visible), 2)
@@ -117,7 +117,7 @@ class Test_UserFile(unittest.TestCase):
         # should only open up the main, not the children
         new_node = Node({"id": "5", "nm": "fifth", "pa": "4"})
         self.uf.nds.add_node(new_node)
-        self.gn("4").children.append(new_node)
+        self.gn("4").add_child(new_node)
         self.uf.load_visible()
         self.assertEqual(len(self.uf.visible), 5)
         self.gn("2").closed = True
@@ -133,7 +133,7 @@ class Test_UserFile(unittest.TestCase):
         # cursor is closed, but children are open
         new_node = Node({"id": "5", "nm": "fifth", "pa": "4"})
         self.uf.nds.add_node(new_node)
-        self.gn("4").children.append(new_node)
+        self.gn("4").add_child(new_node)
         self.gn("2").closed = True
         self.uf.load_visible()
         self.assertEqual(len(self.uf.visible), 2)
@@ -213,11 +213,11 @@ class Test_UserFile(unittest.TestCase):
         self.uf.indent()
         self.assertEqual(
             self.gn("0").children,
-            [self.gn("1")],
+            (self.gn("1"),),
         )
         self.assertEqual(
             self.gn("1").children,
-            [self.gn("2")],
+            (self.gn("2"),),
         )
 
     def test_unindent_not_top(self):
@@ -229,7 +229,7 @@ class Test_UserFile(unittest.TestCase):
         )
         self.assertEqual(
             self.gn("2").children,
-            [self.gn("4")],
+            (self.gn("4"),),
         )
 
     def test_unindent_top(self):

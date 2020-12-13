@@ -44,6 +44,28 @@ class Node:
         self._clones = [node_store.get_node(node_id) for node_id in self._clones]
 
     """
+    ### Mutator properties
+    """
+
+    def add_child(self, node, position=None):
+        if position is None:
+            self._children.append(node)
+        else:
+            self._children.insert(position, node)
+
+    def remove_child(self, node):
+        self._children.remove(node)
+
+    def add_clone(self, node, position=None):
+        if position is None:
+            self._clones.append(node)
+        else:
+            self._clones.insert(position, node)
+
+    def remove_clone(self, node):
+        self._children.remove(node)
+
+    """
     ### Accessor properties
     """
 
@@ -77,7 +99,11 @@ class Node:
 
     @property
     def children(self):
-        return self._children
+        """
+        returning a tuple enforces that nobody is altering our children
+        without our consent.
+        """
+        return tuple(self._children)
 
     @children.setter
     def children(self, x):
@@ -109,7 +135,11 @@ class Node:
 
     @property
     def clones(self):
-        return self._clones
+        """
+        returning a tuple enforces that nobody is altering our clones
+        without our consent.
+        """
+        return tuple(self._clones)
 
     @clones.setter
     def clones(self, x):

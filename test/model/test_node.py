@@ -10,7 +10,7 @@ class Test_Node(unittest.TestCase):
         self.assertEqual(node.parent, "parent")
         self.assertEqual(node.uuid, "id")
         self.assertEqual(node.name, "name")
-        self.assertEqual(node.children, "child")
+        self.assertEqual(node.children, tuple("child"))
         self.assertEqual(node.closed, "closed")
         self.assertEqual(node.complete, "complete")
 
@@ -28,7 +28,7 @@ class Test_Node(unittest.TestCase):
         self.assertEqual(node.parent, "parent")
         self.assertEqual(node.uuid, "id")
         self.assertEqual(node.name, "name")
-        self.assertEqual(node.children, "child")
+        self.assertEqual(node.children, tuple("child"))
         self.assertEqual(node.closed, "closed")
         self.assertEqual(node.complete, "complete")
 
@@ -45,7 +45,7 @@ class Test_Node(unittest.TestCase):
         self.assertEqual(node.parent, "parent")
         self.assertEqual(node.uuid, "id")
         self.assertEqual(node.name, "name")
-        self.assertEqual(node.children, "child")
+        self.assertEqual(node.children, tuple("child"))
         self.assertEqual(node.closed, "closed")
         self.assertEqual(node.complete, "complete")
 
@@ -70,7 +70,7 @@ class Test_Node(unittest.TestCase):
         self.assertEqual(node.parent, "1")
         self.assertEqual(node.uuid, "fake_uuid")
         self.assertEqual(node.name, "")
-        self.assertEqual(node.children, [])
+        self.assertEqual(node.children, tuple())
         self.assertEqual(node.closed, False)
         self.assertEqual(node.complete, False)
 
@@ -107,7 +107,7 @@ class Test_Node(unittest.TestCase):
         self.assertEqual(node.state, "item")
         node.complete = True
         self.assertEqual(node.state, "complete_item")
-        node.children.append("CHILD")
+        node.add_child("CHILD")
         self.assertEqual(node.state, "complete_parent")
         node.complete = False
         self.assertEqual(node.state, "open")
