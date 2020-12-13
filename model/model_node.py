@@ -27,6 +27,17 @@ class Node:
             self._children,
         )
 
+    def flatify(self, attr):
+        # Let's let it slide for now
+        return attr
+        if isinstance(attr, Node):
+            return attr.uuid
+        else:
+            return [node.uuid for node in attr]
+
+    def normalize(self, node_store):
+        pass
+
     """
     ### Accessor properties
     """
@@ -127,27 +138,27 @@ class Node:
     @property
     def flat_format(self):
         return {
-            "pa": self._parent,
+            "pa": self.flatify(self._parent),
             "id": self._uuid,
             "nm": self._name,
-            "ch": self._children,
+            "ch": self.flatify(self._children),
             "cl": self._closed,
             "cp": self._complete,
-            "cn": self._cloning,
-            "cs": self._clones,
+            "cn": self.flatify(self._cloning),
+            "cs": self.flatify(self._clones),
         }
 
     @property
     def digestable_format(self):
         return [
-            ("pa", self._parent),
+            ("pa", self.flatify(self._parent)),
             ("id", self._uuid),
             ("nm", self._name),
-            ("ch", tuple(self._children)),
+            ("ch", tuple(self.flatify(self._children))),
             ("cl", self._closed),
             ("cp", self._complete),
-            ("cn", self._cloning),
-            ("cs", tuple(self._clones)),
+            ("cn", self.flatify(self._cloning)),
+            ("cs", tuple(self.flatify(self._clones))),
         ]
 
     @property

@@ -4,7 +4,6 @@ from unittest.mock import patch, Mock, ANY
 
 from model.file_based import UserFile, ModelException
 from model.model_node import Node
-from model.node_store import NodeStore
 
 
 class Test_UserFile(unittest.TestCase):
@@ -20,10 +19,7 @@ class Test_UserFile(unittest.TestCase):
             {"id": "3", "nm": "sayonara", "cl": False, "ch": [], "pa": "2"},
             {"id": "4", "nm": "nice", "cl": False, "ch": [], "pa": "2"}
         ]
-        nds = NodeStore()
-        for node_def in test_data:
-            nds.add_node(Node(node_def))
-        self.uf.nds = nds
+        self.uf.data_from_flat_object(test_data)
         self.assertEqual(5, len(self.uf.nds))
 
     def test_current_node(self):
@@ -155,10 +151,9 @@ class Test_UserFile(unittest.TestCase):
         self.assertEqual(self.uf.cursor_y, 0)
 
     def test_data_from_fo(self):
-        fo = Mock()
+        fo = [{"pa": "4"}]
         self.assertEqual(len(self.uf.nds), 5)
-        fo.read.return_value = '''[{"pa": "4"}]'''
-        self.uf.data_from_file_object(fo)
+        self.uf.data_from_flat_object(fo)
         self.assertEqual(len(self.uf.nds), 6)
 
     def test_cursor_to_node(self):
@@ -375,29 +370,33 @@ class Test_UserFile(unittest.TestCase):
         third_node = self.uf.nds.get_node(self.uf.nds.get_node("2").children[2])
         self.assertTrue(third_node.is_clone)
 
-    @patch("model.file_based.UserFile.data_from_file_object")
+    @patch("model.file_based.UserFile.data_from_flat_object")
+    @patch("model.file_based.json")
     @patch("model.file_based.open")
     @patch("model.file_based.UserFile._create_empty_data_file")
     @patch("model.file_based.os.path.exists")
-    def test_load_data_exists(self, mock_exists, mock_create_empty, mock_open, mock_data_from_fo):
+    def test_load_data_exists(self, mock_exists, mock_create_empty, mock_open, mock_json, mock_data_from_fo):
         mock_exists.return_value = True
         self.uf._load_data()
         mock_create_empty.assert_not_called()
         mock_exists.assert_called_once_with(self.uf.DATA_FILE)
         mock_open.assert_called_once_with(self.uf.DATA_FILE)
-        mock_data_from_fo.assert_called_once_with(mock_open.return_value.__enter__.return_value)
+        mock_json.load.assert_called_once_with(mock_open.return_value.__enter__.return_value)
+        mock_data_from_fo.assert_called_once_with(mock_json.load.return_value)
 
-    @patch("model.file_based.UserFile.data_from_file_object")
+    @patch("model.file_based.UserFile.data_from_flat_object")
+    @patch("model.file_based.json")
     @patch("model.file_based.open")
     @patch("model.file_based.UserFile._create_empty_data_file")
     @patch("model.file_based.os.path.exists")
-    def test_load_data_doesnt_exist(self, mock_exists, mock_create_empty, mock_open, mock_data_from_fo):
+    def test_load_data_doesnt_exist(self, mock_exists, mock_create_empty, mock_open, mock_json, mock_data_from_fo):
         mock_exists.return_value = False
         self.uf._load_data()
         mock_create_empty.assert_called_once_with()
         mock_exists.assert_called_once_with(self.uf.DATA_FILE)
         mock_open.assert_called_once_with(self.uf.DATA_FILE)
-        mock_data_from_fo.assert_called_once_with(mock_open.return_value.__enter__.return_value)
+        mock_json.load.assert_called_once_with(mock_open.return_value.__enter__.return_value)
+        mock_data_from_fo.assert_called_once_with(mock_json.load.return_value)
 
     @patch("model.file_based.UserFile._write_data_file")
     def test_create_empty_data_file(self, mock_write_data):
@@ -425,11 +424,7 @@ class TestPlainClones(unittest.TestCase):
             {"id": "1", "nm": "henlo", "cl": False, "ch": [], "pa": "0", "cs": ["2"]},
             {"id": "2", "nm": "Clone", "cl": False, "ch": [], "pa": "0", "cn": "1"},
         ]
-        nds = NodeStore()
-        for node_def in test_data:
-            nds.add_node(Node(node_def))
-        self.uf.nds = nds
-        self.uf.instantiate_clone_names()
+        self.uf.data_from_flat_object(test_data)
         self.assertEqual(3, len(self.uf.nds))
 
     def test_visible(self):
