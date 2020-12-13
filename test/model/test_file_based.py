@@ -377,7 +377,7 @@ class Test_UserFile(unittest.TestCase):
             self.gn("2").children[0:2],
             self.gns(["3", "4"]),
         )
-        third_node = self.gn(self.gn("2").children[2])
+        third_node = self.gn("2").children[2]
         self.assertTrue(third_node.is_clone)
 
     @patch("model.file_based.UserFile.data_from_flat_object")

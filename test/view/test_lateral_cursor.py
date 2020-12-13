@@ -3,8 +3,6 @@ import unittest.mock as mock
 
 from view.view import View
 from view_model.view_model import ViewModel
-from model.model_node import Node
-from model.node_store import NodeStore
 
 
 class Test_LateralCursor(unittest.TestCase):
@@ -18,10 +16,7 @@ class Test_LateralCursor(unittest.TestCase):
             {"id": "1", "nm": "henlo", "cl": False, "ch": [], "pa": "0"},
             {"id": "2", "nm": "goodbye", "cl": False, "ch": [], "pa": "0"},
         ]
-        nds = NodeStore()
-        for node_def in test_data:
-            nds.add_node(Node(node_def))
-        self.vm.m.nds = nds
+        self.vm.m.data_from_flat_object(test_data)
         self.assertEqual(3, len(self.vm.m.nds))
         self.vm.v = View()
         self.lc = self.vm.v.lc  # purely an alias
