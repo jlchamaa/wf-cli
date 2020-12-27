@@ -48,13 +48,6 @@ class UserFile:
             return node_pair[0]
 
     # FILE METHODS
-    def data_from_flat_object(self, flat_obj):
-        for node_def in flat_obj:
-            node = Node(node_def=node_def)
-            self.nds.add_node(node)
-        for node_id, node_data in self.nds.items():
-            node_data.normalize(self.nds)
-
     @classmethod
     def _write_data_file(cls, data_obj):
         os.makedirs(os.path.dirname(cls.DATA_FILE), exist_ok=True)
@@ -75,7 +68,7 @@ class UserFile:
 
         with open(self.DATA_FILE) as f:
             flat_obj = json.load(f)
-            self.data_from_flat_object(flat_obj)
+            self.nds.init_from_flat_object(flat_obj)
 
     def save(self):
         with open(self.DATA_FILE, "w") as f:

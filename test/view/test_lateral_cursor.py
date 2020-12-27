@@ -16,7 +16,7 @@ class Test_LateralCursor(unittest.TestCase):
             {"id": "1", "nm": "henlo", "cl": False, "ch": [], "pa": "0"},
             {"id": "2", "nm": "goodbye", "cl": False, "ch": [], "pa": "0"},
         ]
-        self.vm.m.data_from_flat_object(test_data)
+        self.vm.m.nds.init_from_flat_object(test_data)
         self.assertEqual(3, len(self.vm.m.nds))
         self.vm.v = View()
         self.lc = self.vm.v.lc  # purely an alias

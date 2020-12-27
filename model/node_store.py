@@ -1,4 +1,5 @@
 import logging
+from model.model_node import Node
 
 
 log = logging.getLogger("wfcli")
@@ -51,3 +52,13 @@ class NodeStore:
     @property
     def flat_format(self):
         return [node.flat_format for uuid, node in self.nodes.items()]
+
+    def init_from_flat_object(self, flat_obj):
+        for node_def in flat_obj:
+            node = Node(node_def=node_def)
+            self.add_node(node)
+        for node_id, node_data in self.items():
+            node_data.normalize(self)
+
+    def integrity_check(self):
+        pass

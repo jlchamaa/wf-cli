@@ -4,6 +4,7 @@ from unittest.mock import Mock, patch
 from model.model_node import Node
 from model.node_store import NodeStore
 
+
 class Test_Node_Store(unittest.TestCase):
     def setUp(self):
         self.nodes = [
@@ -16,7 +17,7 @@ class Test_Node_Store(unittest.TestCase):
             self.ns.add_node(node)
 
     def test_add_node(self):
-        # adding is done by the setup for the sake of the other tests.  
+        # adding is done by the setup for the sake of the other tests.
         # But here's where we test the basic sanity of that setUp
         self.assertIs(self.ns.nodes["A"], self.nodes[0])
         self.assertIs(self.ns.nodes["B"], self.nodes[1])
@@ -40,9 +41,8 @@ class Test_Node_Store(unittest.TestCase):
     def test_len(self):
         self.assertEqual(len(self.ns), 2)
 
-    # wait until the node digest is stable
-    # def test_digest(self):
-    #     self.assertEqual(3381629315008440964, self.ns.digest)
+    def test_integrity_simple(self):
+        pass
 
 
 if __name__ == "__main__":

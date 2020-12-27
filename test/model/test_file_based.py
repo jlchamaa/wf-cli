@@ -25,7 +25,7 @@ class Test_UserFile(unittest.TestCase):
             {"id": "3", "nm": "sayonara", "cl": False, "ch": [], "pa": "2"},
             {"id": "4", "nm": "nice", "cl": False, "ch": [], "pa": "2"}
         ]
-        self.uf.data_from_flat_object(test_data)
+        self.uf.nds.init_from_flat_object(test_data)
         self.assertEqual(5, len(self.uf.nds))
 
     def test_current_node(self):
@@ -380,7 +380,7 @@ class Test_UserFile(unittest.TestCase):
         third_node = self.gn("2").children[2]
         self.assertTrue(third_node.is_clone)
 
-    @patch("model.file_based.UserFile.data_from_flat_object")
+    @patch("model.node_store.NodeStore.init_from_flat_object")
     @patch("model.file_based.json")
     @patch("model.file_based.open")
     @patch("model.file_based.UserFile._create_empty_data_file")
@@ -394,7 +394,7 @@ class Test_UserFile(unittest.TestCase):
         mock_json.load.assert_called_once_with(mock_open.return_value.__enter__.return_value)
         mock_data_from_fo.assert_called_once_with(mock_json.load.return_value)
 
-    @patch("model.file_based.UserFile.data_from_flat_object")
+    @patch("model.node_store.NodeStore.init_from_flat_object")
     @patch("model.file_based.json")
     @patch("model.file_based.open")
     @patch("model.file_based.UserFile._create_empty_data_file")
@@ -435,7 +435,7 @@ class TestPlainClones(unittest.TestCase):
             {"id": "2", "nm": "Clone", "cl": False, "ch": [], "pa": "0", "cn": "1"},
             {"id": "3", "nm": "Clone", "cl": False, "ch": [], "pa": "0", "cn": "1"},
         ]
-        self.uf.data_from_flat_object(test_data)
+        self.uf.nds.init_from_flat_object(test_data)
         self.assertEqual(3, len(self.uf.visible))
 
     def gn(self, node_id):
