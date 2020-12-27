@@ -430,20 +430,45 @@ class TestPlainClones(unittest.TestCase):
         mocked_load_data.assert_called_once()
         self.assertEqual(0, len(self.uf.nds))
         test_data = [
-            {"id": "0", "nm": "root", "cl": False, "ch": ["1", "2"], "pa": None},
-            {"id": "1", "nm": "henlo", "cl": False, "ch": [], "pa": "0", "cs": ["2"]},
+            {"id": "0", "nm": "root", "cl": False, "ch": ["1", "2", "3"], "pa": None},
+            {"id": "1", "nm": "henlo", "cl": False, "ch": [], "pa": "0", "cs": ["2", "3"]},
             {"id": "2", "nm": "Clone", "cl": False, "ch": [], "pa": "0", "cn": "1"},
+            {"id": "3", "nm": "Clone", "cl": False, "ch": [], "pa": "0", "cn": "1"},
         ]
         self.uf.data_from_flat_object(test_data)
-        self.assertEqual(3, len(self.uf.nds))
+        self.assertEqual(3, len(self.uf.visible))
+
+    def gn(self, node_id):
+        return self.uf.nds.get_node(node_id)
+
+    def gns(self, node_ids):
+        return tuple(self.uf.nds.get_node(node_id) for node_id in node_ids)
 
     def test_visible(self):
-        self.assertEqual(2, len(self.uf.visible))
+        self.assertEqual(3, len(self.uf.visible))
+
+    def test_edit_clone_changes_original(self):
+        viz = self.uf.visible
+        self.gn("2").name = "goodbye"
+        self.assertEqual(viz[0][0].name, "goodbye")
+        self.assertEqual(viz[1][0].name, "goodbye")
+        self.assertEqual(viz[2][0].name, "goodbye")
 
     def test_edit_original_changes_clone(self):
         viz = self.uf.visible
-        self.assertEqual(viz[0][0].name, "henlo")
-        self.assertEqual(viz[1][0].name, "henlo")
+        self.gn("1").name = "goodbye"
+        self.assertEqual(viz[0][0].name, "goodbye")
+        self.assertEqual(viz[1][0].name, "goodbye")
+        self.assertEqual(viz[2][0].name, "goodbye")
+
+    def test_add_child_to_original(self):
+        node_1 = self.gn("1")
+        new_node = self.uf.create_node(node_1, id="4", nm="fifth")
+        self.uf.link_parent_child(node_1, new_node)
+        self.assertEqual(4, len(self.uf.visible))
+
+    def test_no_recursive_paste(self):
+        pass
 
 
 if __name__ == "__main__":

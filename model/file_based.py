@@ -127,11 +127,11 @@ class UserFile:
     # LINKING METHODS
     @update_visible_after
     def link_parent_child(self, parent, child, position=-1):
-        child.parent = parent
         if position >= 0:
             parent.add_child(child, position)
         else:
             parent.add_child(child)
+        child.parent = parent
 
     @update_visible_after
     def unlink_relink(self, old_parent, child, new_parent, position):
@@ -239,11 +239,7 @@ class UserFile:
         current_node_index = parents_child_list.index(current_node)
         if current_node_index < len(parents_child_list) - 1:
             # swap with the one ahead
-            node_being_swapped = parents_child_list[current_node_index + 1]
-            parent_node.remove_child(node_being_swapped)
-            parent_node.remove_child(current_node)
-            parent_node.add_child(current_node, current_node_index + 1)
-            parent_node.add_child(node_being_swapped, current_node_index)
+            self.unlink_relink(parent_node, current_node, parent_node, current_node_index + 1)
             self.set_cursor_to_node(current_node.uuid)
 
     @update_visible_after
@@ -254,11 +250,7 @@ class UserFile:
         current_node_index = parents_child_list.index(current_node)
         if current_node_index > 0:
             # swap with the one behind
-            node_being_swapped = parents_child_list[current_node_index - 1]
-            parent_node.remove_child(node_being_swapped)
-            parent_node.remove_child(current_node)
-            parent_node.add_child(current_node, current_node_index - 1)
-            parent_node.add_child(node_being_swapped, current_node_index)
+            self.unlink_relink(parent_node, current_node, parent_node, current_node_index - 1)
             self.set_cursor_to_node(current_node.uuid)
 
     @update_visible_after

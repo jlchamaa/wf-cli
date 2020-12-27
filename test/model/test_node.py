@@ -107,7 +107,7 @@ class Test_Node(unittest.TestCase):
         self.assertEqual(node.state, "item")
         node.complete = True
         self.assertEqual(node.state, "complete_item")
-        node.add_child("CHILD")
+        node.add_child(Node(pa=node))
         self.assertEqual(node.state, "complete_parent")
         node.complete = False
         self.assertEqual(node.state, "open")

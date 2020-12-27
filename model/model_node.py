@@ -44,7 +44,7 @@ class Node:
         self._clones = [node_store.get_node(node_id) for node_id in self._clones]
 
     """
-    ### Mutator properties
+    ### Mutator methods
     """
 
     def add_child(self, node, position=None):

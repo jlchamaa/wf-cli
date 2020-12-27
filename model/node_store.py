@@ -21,7 +21,13 @@ class NodeStore:
         return self.nodes[node_id]
 
     def add_node(self, node):
-        self.nodes[node.uuid] = node
+        if node.uuid not in self.nodes:
+            self.nodes[node.uuid] = node
+        else:
+            if self.nodes[node.uuid] is node:
+                log.info("Node {} was already in the store".format(node.uuid))
+            else:
+                raise ValueError("Adding node {} that would overwrite".format(node.uuid))
 
     def __contains__(self, id):
         return id in self.nodes
