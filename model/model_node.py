@@ -1,39 +1,54 @@
 import uuid
 import logging
 from model.exceptions import ModelException
-
-
+from collections import namedtuple
 log = logging.getLogger("wfcli")
+
+attribute = namedtuple("attribute", ["name", "shorthand", "default", "flatten"])
+all_attributes = [
+    attribute("_parent", "pa", lambda: None, lambda x: x),
+    attribute("_uuid", "id", lambda: str(uuid.uuid4()), lambda x: x),
+    attribute("_name", "nm", lambda: "", lambda x: x),
+    attribute("_children", "ch", list, lambda x: x),
+    attribute("_closed", "cl", lambda: False, lambda x: x),
+    attribute("_complete", "cp", lambda: False, lambda x: x),
+    attribute("_cloning", "cn", lambda: None, lambda x: x),
+    attribute("_clones", "cs", list, lambda x: x),
+]
+
+
+def flatify(attr):
+    if attr is None:
+        return None
+    if isinstance(attr, Node):
+        return attr.uuid
+    else:
+        return [node.uuid for node in attr]
 
 
 class Node:
     def __init__(self, node_def=None, **kwargs):
         if node_def is None:
             node_def = dict(kwargs)
-        self._parent = node_def["pa"]  # mandatory one here
-        self._uuid = node_def.get("id", str(uuid.uuid4()))
-        self._name = node_def.get("nm", "")
-        self._children = node_def.get("ch", [])
-        self._closed = node_def.get("cl", False)
-        self._complete = node_def.get("cp", False)
-        self._cloning = node_def.get("cn", None)
-        self._clones = node_def.get("cs", [])
+        if "pa" not in node_def:
+            raise KeyError  # gotta have a parent explicitly defined
+        for attribute in all_attributes:
+            setattr(
+                self,
+                attribute.name,
+                node_def.get(attribute.shorthand, attribute.default()),
+            )
+
+    def __repr__(self):
+        return self._uuid
 
     def __str__(self):
-        return "{}: {}\n\tParent: {}\n\tChildren: {}".format(
+        return "\t{}: {}\tParent: {}\tChildren: {}".format(
             self._uuid,
             self._name,
-            self._parent,
-            self._children,
+            self._parent.uuid if self._parent is not None else None,
+            [c.uuid for c in self._children],
         )
-
-    def flatify(self, attr):
-        if attr is None:
-            return None
-        if isinstance(attr, Node):
-            return attr.uuid
-        else:
-            return [node.uuid for node in attr]
 
     def normalize(self, node_store):
         if self._parent is not None:
@@ -63,7 +78,7 @@ class Node:
             self._clones.insert(position, node)
 
     def remove_clone(self, node):
-        self._children.remove(node)
+        self._clones.remove(node)
 
     """
     ### Accessor properties
@@ -173,27 +188,27 @@ class Node:
     @property
     def flat_format(self):
         return {
-            "pa": self.flatify(self._parent),
+            "pa": flatify(self._parent),
             "id": self._uuid,
             "nm": self._name,
-            "ch": self.flatify(self._children),
+            "ch": flatify(self._children),
             "cl": self._closed,
             "cp": self._complete,
-            "cn": self.flatify(self._cloning),
-            "cs": self.flatify(self._clones),
+            "cn": flatify(self._cloning),
+            "cs": flatify(self._clones),
         }
 
     @property
     def digestable_format(self):
         return [
-            ("pa", self.flatify(self._parent)),
+            ("pa", flatify(self._parent)),
             ("id", self._uuid),
             ("nm", self._name),
-            ("ch", tuple(self.flatify(self._children))),
+            ("ch", tuple(flatify(self._children))),
             ("cl", self._closed),
             ("cp", self._complete),
-            ("cn", self.flatify(self._cloning)),
-            ("cs", tuple(self.flatify(self._clones))),
+            ("cn", flatify(self._cloning)),
+            ("cs", tuple(flatify(self._clones))),
         ]
 
     @property

@@ -41,8 +41,60 @@ class Test_Node_Store(unittest.TestCase):
     def test_len(self):
         self.assertEqual(len(self.ns), 2)
 
-    def test_integrity_simple(self):
-        pass
+
+class Test_Integrity(unittest.TestCase):
+    def setUp(self):
+        test_data = [
+            {"id": "0", "ch": ["1", "2"], "pa": None},
+            {"id": "1", "ch": ["5"], "pa": "0"},
+            {"id": "2", "ch": ["3", "4"], "pa": "0"},
+            {"id": "3", "ch": ["7"], "pa": "2", "cs": ["6"]},
+            {"id": "4", "ch": [], "pa": "2"},
+            {"id": "5", "ch": ["6"], "pa": "1"},
+            {"id": "6", "ch": ["8"], "pa": "5", "cn": "3"},
+            {"id": "7", "ch": [], "pa": "3", "cs": ["8"]},
+            {"id": "8", "ch": [], "pa": "6", "cn": "7"},
+        ]
+        self.ns = NodeStore()
+        self.ns.init_from_flat_object(test_data)
+
+    def test_basic_integrity(self):
+        self.assertTrue(self.ns.integrity_check())
+
+    def test_missing_child(self):
+        self.ns.get_node("0")._children.pop()
+        self.assertFalse(self.ns.integrity_check())
+
+    def test_additional_child(self):
+        node_3 = self.ns.get_node("3")
+        self.ns.get_node("0")._children.append(node_3)
+        self.assertFalse(self.ns.integrity_check())
+
+    def test_wrong_parent(self):
+        node_3 = self.ns.get_node("3")
+        self.ns.get_node("0").parent = node_3
+        self.assertFalse(self.ns.integrity_check())
+
+    def test_no_parent(self):
+        self.ns.get_node("1").parent = None
+        self.assertFalse(self.ns.integrity_check())
+
+    def test_missing_clone_child(self):
+        node_6 = self.ns.get_node("6")
+        self.ns.get_node("3").remove_clone(node_6)
+        self.assertFalse(self.ns.integrity_check())
+
+    def test_missing_clone_daddy(self):
+        self.ns.get_node("6").cloning = None
+        self.assertFalse(self.ns.integrity_check())
+
+    def test_wrong_clone_children(self):
+        self.ns.get_node("8").cloning = None
+        self.assertFalse(self.ns.integrity_check())
+
+    def test_wrong_clone_children_ii(self):
+        self.ns.get_node("6")._children = []
+        self.assertFalse(self.ns.integrity_check())
 
 
 if __name__ == "__main__":

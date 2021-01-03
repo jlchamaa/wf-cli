@@ -86,16 +86,6 @@ class Test_Node(unittest.TestCase):
         node.closed = True
         self.assertEqual(node.state, "closed")
 
-    def test_digest(self):
-        node = Node(node_def={"pa": "parent", "id": "id", "nm": "nm", "ch": ["C", "N"], "cl": "closed", "cp": "complete"})
-        node.flatify = lambda x: x  # ugly hack, doesn't test flatify.
-        expected_digest_format = [
-            ("pa", "parent"), ("id", "id"), ("nm", "nm"), ("ch", ("C", "N")), ("cl", "closed"), ("cp", "complete"), ("cn", None), ("cs", tuple())]
-        self.assertSequenceEqual(node.digestable_format, expected_digest_format)
-        self.assertEqual(frozenset(node.digestable_format), frozenset(expected_digest_format))
-        self.assertEqual(hash(frozenset(node.digestable_format)), hash(frozenset(expected_digest_format)))
-        self.assertEqual(node.digest, hash(frozenset(expected_digest_format)))
-
     def test_is_root(self):
         with_parent = Node(pa=None)
         self.assertTrue(with_parent.is_root)
