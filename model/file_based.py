@@ -165,7 +165,7 @@ class UserFile:
     def open_above(self):
         current_node = self.current_node()
         parent_node = current_node.parent
-        new_node = self.create_node(None)
+        new_node = self.create_node()
         pos_in_parent_list = parent_node.children.index(current_node)
         self.link_parent_child(
             parent_node,
@@ -177,7 +177,7 @@ class UserFile:
     def open_below(self):
         current_node = self.current_node()
         if current_node.state == "open":
-            new_node = self.create_node(None)
+            new_node = self.create_node()
             self.link_parent_child(
                 current_node,
                 new_node,
@@ -185,7 +185,7 @@ class UserFile:
             )
         else:  # new node is sibling of current node
             parent_node = current_node.parent
-            new_node = self.create_node(None)
+            new_node = self.create_node()
             pos_in_parent_list = parent_node.children.index(current_node)
             self.link_parent_child(
                 parent_node,
@@ -206,7 +206,6 @@ class UserFile:
             root_node = self.nds.get_node(self.root_node_id)
             if len(root_node.children) == 0:
                 new_node = self.create_node(
-                    None,
                     nm="Ooops, you deleted the last item on the list",
                 )
                 self.link_parent_child(
@@ -243,14 +242,13 @@ class UserFile:
         current_node.complete = not current_node.complete
 
     @update_visible_after
-    def create_node(self, parent, **kwargs):
-        node = Node(pa=parent, **kwargs)
+    def create_node(self, **kwargs):
+        node = Node(pa=None, **kwargs)
         self.nds.add_node(node)
         return node
 
     def create_clone_of(self, node_being_cloned, new_parent, new_position=0):
         clone_node = self.create_node(
-            None,
             nm="",
             cn=node_being_cloned,
         )

@@ -3,7 +3,6 @@ import unittest
 from unittest.mock import patch, Mock, ANY
 
 from model.file_based import UserFile, ModelException
-from model.model_node import Node
 
 
 class Test_UserFile(unittest.TestCase):
@@ -42,7 +41,7 @@ class Test_UserFile(unittest.TestCase):
         self.assertEqual(len(self.uf._visible), 1)
 
     def test_create_node(self):
-        node = self.uf.create_node("parent")
+        node = self.uf.create_node()
         self.assertIs(node, self.gn(node.uuid))
 
     def test_close_open_item(self):
@@ -54,10 +53,8 @@ class Test_UserFile(unittest.TestCase):
         self.assertEqual(len(self.uf.visible), 2)
 
     def test_close_open_compound_item(self):
-        new_node = Node({"id": "5", "nm": "fifth", "pa": "4"})
-        new_node.normalize(self.uf.nds)
-        self.uf.nds.add_node(new_node)
-        self.gn("4").add_child(new_node)
+        new_node = self.uf.create_node(id="5")
+        self.uf.link_parent_child(self.gn("4"), new_node)
         self.uf.load_visible()
         self.assertEqual(len(self.uf.visible), 5)
         self.uf.cursor_y = 1
@@ -102,7 +99,7 @@ class Test_UserFile(unittest.TestCase):
 
     def test_open_compound_closed_open_item(self):
         # cursor is closed, but children are open
-        new_node = self.uf.create_node(None, id="5")
+        new_node = self.uf.create_node(id="5")
         self.uf.link_parent_child(self.gn("4"), new_node)
         self.gn("2").closed = True
         self.uf.load_visible()
@@ -115,7 +112,7 @@ class Test_UserFile(unittest.TestCase):
     def test_open_compound_closed_closed_item(self):
         # cursor is closed, but children are also closed
         # should only open up the main, not the children
-        new_node = self.uf.create_node(None, id="5")
+        new_node = self.uf.create_node(id="5")
         self.uf.link_parent_child(self.gn("4"), new_node)
         self.uf.load_visible()
         self.assertEqual(len(self.uf.visible), 5)
@@ -130,7 +127,7 @@ class Test_UserFile(unittest.TestCase):
 
     def test_open_compound_closed_item(self):
         # cursor is closed, but children are open
-        new_node = self.uf.create_node(None, id="5")
+        new_node = self.uf.create_node(id="5")
         self.uf.link_parent_child(self.gn("4"), new_node)
         self.gn("2").closed = True
         self.uf.load_visible()
