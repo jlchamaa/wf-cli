@@ -94,6 +94,7 @@ class UserFile:
         for node in self.nds.get_node(self.root_node_id).children:
             if node is not None:
                 self._traverse_node(node, 0)
+        self.nds.integrity_check()
         return self._visible
 
     def _traverse_node(self, current_node, depth):
@@ -120,23 +121,14 @@ class UserFile:
     # LINKING METHODS
     @update_visible_after
     def link_parent_child(self, parent, child, position=-1):
+        old_parent = child.parent
+        if old_parent is not None:
+            old_parent.remove_child(child)
         if position >= 0:
             parent.add_child(child, position)
         else:
             parent.add_child(child)
         child.parent = parent
-
-    @update_visible_after
-    def unlink_relink(self, old_parent, child, new_parent, position):
-        def unlink_parent_child(self, parent, child):
-            assert child.uuid in self.nds
-            assert parent.uuid in self.nds
-            assert child.parent == parent
-            assert child in parent.children
-            parent.remove_child(child)
-            child.parent = None
-        unlink_parent_child(self, old_parent, child)
-        self.link_parent_child(new_parent, child, position)
 
     # MANIPULATE NODES
     @update_visible_after
@@ -149,7 +141,7 @@ class UserFile:
             raise ModelException("Indent of top child")
         else:
             new_parent = parents_child_list[current_node_index - 1]
-            self.unlink_relink(parent_node, current_node, new_parent, -1)
+            self.link_parent_child(new_parent, current_node, -1)
             new_parent.closed = False
             log.info("Nailed it")
 
@@ -162,10 +154,9 @@ class UserFile:
         else:
             super_parent_node = parent_node.parent
             pos_in_parent_list = super_parent_node.children.index(parent_node)
-            self.unlink_relink(
-                parent_node,
-                current_node,
+            self.link_parent_child(
                 super_parent_node,
+                current_node,
                 pos_in_parent_list + 1,
             )
             log.info("nailed it")
@@ -174,7 +165,7 @@ class UserFile:
     def open_above(self):
         current_node = self.current_node()
         parent_node = current_node.parent
-        new_node = self.create_node(parent_node)
+        new_node = self.create_node(None)
         pos_in_parent_list = parent_node.children.index(current_node)
         self.link_parent_child(
             parent_node,
@@ -186,7 +177,7 @@ class UserFile:
     def open_below(self):
         current_node = self.current_node()
         if current_node.state == "open":
-            new_node = self.create_node(current_node)
+            new_node = self.create_node(None)
             self.link_parent_child(
                 current_node,
                 new_node,
@@ -194,7 +185,7 @@ class UserFile:
             )
         else:  # new node is sibling of current node
             parent_node = current_node.parent
-            new_node = self.create_node(parent_node.uuid)
+            new_node = self.create_node(None)
             pos_in_parent_list = parent_node.children.index(current_node)
             self.link_parent_child(
                 parent_node,
@@ -215,7 +206,7 @@ class UserFile:
             root_node = self.nds.get_node(self.root_node_id)
             if len(root_node.children) == 0:
                 new_node = self.create_node(
-                    root_node,
+                    None,
                     nm="Ooops, you deleted the last item on the list",
                 )
                 self.link_parent_child(
@@ -232,7 +223,7 @@ class UserFile:
         current_node_index = parents_child_list.index(current_node)
         if current_node_index < len(parents_child_list) - 1:
             # swap with the one ahead
-            self.unlink_relink(parent_node, current_node, parent_node, current_node_index + 1)
+            self.link_parent_child(parent_node, current_node, current_node_index + 1)
             self.set_cursor_to_node(current_node.uuid)
 
     @update_visible_after
@@ -243,7 +234,7 @@ class UserFile:
         current_node_index = parents_child_list.index(current_node)
         if current_node_index > 0:
             # swap with the one behind
-            self.unlink_relink(parent_node, current_node, parent_node, current_node_index - 1)
+            self.link_parent_child(parent_node, current_node, current_node_index - 1)
             self.set_cursor_to_node(current_node.uuid)
 
     @update_visible_after
@@ -259,7 +250,7 @@ class UserFile:
 
     def create_clone_of(self, node_being_cloned, new_parent, new_position=0):
         clone_node = self.create_node(
-            new_parent,
+            None,
             nm="",
             cn=node_being_cloned,
         )

@@ -164,6 +164,13 @@ class Node:
     ### State Properties
     """
 
+    def is_ancestor(self, node):
+        if node is self:
+            return True
+        if self.parent is None:
+            return False
+        return self.parent.is_ancestor(node)
+
     @property
     def is_clone(self):
         return self._cloning is not None

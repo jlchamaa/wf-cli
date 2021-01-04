@@ -65,31 +65,26 @@ class NodeStore:
             # check my parent
             if node.parent is not None:
                 if node not in node.parent.children:
-                    log.error("{} fails. Not present in its parent's children".format(node.uuid))
-                    return False
+                    raise AssertionError("{} fails. Not present in its parent's children".format(node.uuid))
 
             # check my children
             for child in node.children:
                 if child.parent is not node:
-                    log.error("{} fails. Child {} doesn't have as parent".format(node.uuid, child.uuid))
-                    return False
+                    raise AssertionError("{} fails. Child {} doesn't have as parent".format(node.uuid, child.uuid))
 
             # check my basic cloning
             if node.cloning is not None:
                 if node not in node.cloning.clones:
-                    log.error("{} fails. Not present in its cloning's clones".format(node.uuid))
-                    return False
+                    raise AssertionError("{} fails. Not present in its cloning's clones".format(node.uuid))
 
             # and the reverse
             for clone in node.clones:
                 if clone.cloning is not node:
-                    log.error("{} fails. Clone {} doesn't have node as clone daddy".format(node.uuid, clone.uuid))
-                    return False
+                    raise AssertionError("{} fails. Clone {} doesn't have node as clone daddy".format(node.uuid, clone.uuid))
 
             # clone nesting
             if node.cloning is not None:
                 children_of_what_i_clone = [n.uuid for n in node.cloning.children]
                 what_my_children_clone = [n.cloning.uuid for n in node.children if n.cloning is not None]
                 if children_of_what_i_clone != what_my_children_clone:
-                    log.error("{} fails. Children don't match up".format(node.uuid))
-        return True
+                    raise AssertionError("{} fails. Children don't match up".format(node.uuid))

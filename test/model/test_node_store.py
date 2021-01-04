@@ -59,42 +59,50 @@ class Test_Integrity(unittest.TestCase):
         self.ns.init_from_flat_object(test_data)
 
     def test_basic_integrity(self):
-        self.assertTrue(self.ns.integrity_check())
+        self.assertEqual(None, self.ns.integrity_check())
 
     def test_missing_child(self):
         self.ns.get_node("0")._children.pop()
-        self.assertFalse(self.ns.integrity_check())
+        with self.assertRaises(AssertionError):
+            self.ns.integrity_check()
 
     def test_additional_child(self):
         node_3 = self.ns.get_node("3")
         self.ns.get_node("0")._children.append(node_3)
-        self.assertFalse(self.ns.integrity_check())
+        with self.assertRaises(AssertionError):
+            self.ns.integrity_check()
 
     def test_wrong_parent(self):
         node_3 = self.ns.get_node("3")
         self.ns.get_node("0").parent = node_3
-        self.assertFalse(self.ns.integrity_check())
+        with self.assertRaises(AssertionError):
+            self.ns.integrity_check()
 
     def test_no_parent(self):
         self.ns.get_node("1").parent = None
-        self.assertFalse(self.ns.integrity_check())
+        with self.assertRaises(AssertionError):
+            self.ns.integrity_check()
 
     def test_missing_clone_child(self):
         node_6 = self.ns.get_node("6")
         self.ns.get_node("3").remove_clone(node_6)
-        self.assertFalse(self.ns.integrity_check())
+        with self.assertRaises(AssertionError):
+            self.ns.integrity_check()
 
     def test_missing_clone_daddy(self):
         self.ns.get_node("6").cloning = None
-        self.assertFalse(self.ns.integrity_check())
+        with self.assertRaises(AssertionError):
+            self.ns.integrity_check()
 
     def test_wrong_clone_children(self):
         self.ns.get_node("8").cloning = None
-        self.assertFalse(self.ns.integrity_check())
+        with self.assertRaises(AssertionError):
+            self.ns.integrity_check()
 
     def test_wrong_clone_children_ii(self):
         self.ns.get_node("6")._children = []
-        self.assertFalse(self.ns.integrity_check())
+        with self.assertRaises(AssertionError):
+            self.ns.integrity_check()
 
 
 if __name__ == "__main__":
