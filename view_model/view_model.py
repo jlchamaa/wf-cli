@@ -38,6 +38,9 @@ class ViewModel:
         self.v.open = False
         log.error("Closing App Legitimately")
 
+    def render_error(self, error_message):
+        self.v.render_error(error_message)
+
     # PRINTING METHODS
     def render(self, **kwargs):
         self.v.render_content(
@@ -123,6 +126,7 @@ class ViewModel:
             self.render()
         except ModelException as me:
             log.error(me.msg)
+            self.render_error(me.msg)
 
     def unindent(self, **kwargs):
         try:

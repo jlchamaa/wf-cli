@@ -1,7 +1,7 @@
 #!/usr/bin/env python3.6
 import unittest
-from unittest.mock import Mock, patch
 from model.model_node import Node
+from model.file_based import ModelException
 from model.node_store import NodeStore
 
 
@@ -63,45 +63,45 @@ class Test_Integrity(unittest.TestCase):
 
     def test_missing_child(self):
         self.ns.get_node("0")._children.pop()
-        with self.assertRaises(AssertionError):
+        with self.assertRaises(ModelException):
             self.ns.integrity_check()
 
     def test_additional_child(self):
         node_3 = self.ns.get_node("3")
         self.ns.get_node("0")._children.append(node_3)
-        with self.assertRaises(AssertionError):
+        with self.assertRaises(ModelException):
             self.ns.integrity_check()
 
     def test_wrong_parent(self):
         node_3 = self.ns.get_node("3")
         self.ns.get_node("0").parent = node_3
-        with self.assertRaises(AssertionError):
+        with self.assertRaises(ModelException):
             self.ns.integrity_check()
 
     def test_no_parent(self):
         self.ns.get_node("1").parent = None
-        with self.assertRaises(AssertionError):
+        with self.assertRaises(ModelException):
             self.ns.integrity_check()
 
     def test_missing_clone_child(self):
         node_6 = self.ns.get_node("6")
         self.ns.get_node("3").remove_clone(node_6)
-        with self.assertRaises(AssertionError):
+        with self.assertRaises(ModelException):
             self.ns.integrity_check()
 
     def test_missing_clone_daddy(self):
         self.ns.get_node("6").cloning = None
-        with self.assertRaises(AssertionError):
+        with self.assertRaises(ModelException):
             self.ns.integrity_check()
 
     def test_wrong_clone_children(self):
         self.ns.get_node("8").cloning = None
-        with self.assertRaises(AssertionError):
+        with self.assertRaises(ModelException):
             self.ns.integrity_check()
 
     def test_wrong_clone_children_ii(self):
         self.ns.get_node("6")._children = []
-        with self.assertRaises(AssertionError):
+        with self.assertRaises(ModelException):
             self.ns.integrity_check()
 
 

@@ -1,5 +1,6 @@
 import logging
 from model.model_node import Node
+from model.file_based import ModelException
 
 
 log = logging.getLogger("wfcli")
@@ -65,26 +66,26 @@ class NodeStore:
             # check my parent
             if node.parent is not None:
                 if node not in node.parent.children:
-                    raise AssertionError("{} fails. Not present in its parent's children".format(node.uuid))
+                    raise ModelException("{} fails. Not present in its parent's children".format(node.uuid))
 
             # check my children
             for child in node.children:
                 if child.parent is not node:
-                    raise AssertionError("{} fails. Child {} doesn't have as parent".format(node.uuid, child.uuid))
+                    raise ModelException("{} fails. Child {} doesn't have as parent".format(node.uuid, child.uuid))
 
             # check my basic cloning
             if node.cloning is not None:
                 if node not in node.cloning.clones:
-                    raise AssertionError("{} fails. Not present in its cloning's clones".format(node.uuid))
+                    raise ModelException("{} fails. Not present in its cloning's clones".format(node.uuid))
 
             # and the reverse
             for clone in node.clones:
                 if clone.cloning is not node:
-                    raise AssertionError("{} fails. Clone {} doesn't have node as clone daddy".format(node.uuid, clone.uuid))
+                    raise ModelException("{} fails. Clone {} doesn't have node as clone daddy".format(node.uuid, clone.uuid))
 
             # clone nesting
             if node.cloning is not None:
                 children_of_what_i_clone = [n.uuid for n in node.cloning.children]
                 what_my_children_clone = [n.cloning.uuid for n in node.children if n.cloning is not None]
                 if children_of_what_i_clone != what_my_children_clone:
-                    raise AssertionError("{} fails. Children don't match up".format(node.uuid))
+                    raise ModelException("{} fails. Children don't match up".format(node.uuid))

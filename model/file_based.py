@@ -94,7 +94,6 @@ class UserFile:
         for node in self.nds.get_node(self.root_node_id).children:
             if node is not None:
                 self._traverse_node(node, 0)
-        self.nds.integrity_check()
         return self._visible
 
     def _traverse_node(self, current_node, depth):
@@ -144,6 +143,7 @@ class UserFile:
             self.link_parent_child(new_parent, current_node, -1)
             new_parent.closed = False
             log.info("Nailed it")
+        self.nds.integrity_check()
 
     @update_visible_after
     def unindent(self):

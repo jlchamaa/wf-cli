@@ -64,9 +64,12 @@ class View:
 
     @staticmethod
     def init_colors():
-        curses.init_pair(1, curses.COLOR_CYAN, curses.COLOR_BLACK)
-        curses.init_pair(2, curses.COLOR_BLACK, curses.COLOR_CYAN)
-        curses.init_pair(3, curses.COLOR_MAGENTA, curses.COLOR_BLACK)
+        curses.init_pair(1, curses.COLOR_CYAN, curses.COLOR_BLACK)  # cyan text, dark background
+        curses.init_pair(2, curses.COLOR_BLACK, curses.COLOR_CYAN)  # cyan highlight, dark text
+        curses.init_pair(3, curses.COLOR_MAGENTA, curses.COLOR_BLACK)  # red text for edit mode border
+        curses.init_pair(4, curses.COLOR_BLUE, curses.COLOR_BLACK)  # blue text for cloning
+        curses.init_pair(5, curses.COLOR_YELLOW, curses.COLOR_BLACK)  # yellow text for clone
+        curses.init_pair(6, curses.COLOR_BLACK, curses.COLOR_MAGENTA)  # red highlight for error
 
     def __enter__(self):
         self.sc = curses.initscr()
@@ -155,7 +158,14 @@ class View:
             indent_width = self.indent_size * depth + 3
             text_width = cols - indent_width - 2
             lines = self.generate_lines(node.name, text_width)
-            attribute = self.mode.selection_attr if height == curs_y else curses.A_NORMAL
+            if height == curs_y:
+                attribute = self.mode.selection_attr
+            elif node.cloning is not None:
+                attribute = curses.color_pair(4)
+            elif len(node.clones) > 0:
+                attribute = curses.color_pair(5)
+            else:
+                attribute = curses.A_NORMAL
             if height + self.downset + additional_lines + len(lines) >= rows - 1:
                 break  # stop us from going past the end of the screen!
             new_additional_lines = -1
@@ -204,3 +214,12 @@ class View:
 
         # DRAW TO SCREEN
         self.sc.refresh()
+
+    def render_error(self, error_message):
+        rows, cols = self.sc.getmaxyx()
+        self.sc.addstr(
+            rows - 1,
+            0,
+            "ERROR: {}".format(error_message),
+            curses.color_pair(6),
+        )

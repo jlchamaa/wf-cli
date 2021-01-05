@@ -27,6 +27,10 @@ class Test_UserFile(unittest.TestCase):
         self.uf.nds.init_from_flat_object(test_data)
         self.assertEqual(5, len(self.uf.nds))
 
+    def tearDown(self):
+        if type(self.uf.nds) is not str:
+            self.uf.nds.integrity_check()
+
     def test_current_node(self):
         self.assertEqual(self.uf.current_node().uuid, "1")
 
@@ -426,6 +430,9 @@ class TestPlainClones(unittest.TestCase):
         self.uf.nds.init_from_flat_object(test_data)
         self.assertEqual(3, len(self.uf.visible))
 
+    def tearDown(self):
+        self.uf.nds.integrity_check()
+
     def gn(self, node_id):
         return self.uf.nds.get_node(node_id)
 
@@ -449,11 +456,11 @@ class TestPlainClones(unittest.TestCase):
         self.assertEqual(viz[1][0].name, "goodbye")
         self.assertEqual(viz[2][0].name, "goodbye")
 
-    # def test_add_child_to_original(self):
-    #     node_1 = self.gn("1")
-    #     new_node = self.uf.create_node(None, id="4", nm="fifth")
-    #     self.uf.link_parent_child(node_1, new_node)
-    #     self.assertEqual(4, len(self.uf.visible))
+    def test_add_child_to_original(self):
+        node_1 = self.gn("1")
+        new_node = self.uf.create_node(id="4", nm="fifth")
+        self.uf.link_parent_child(node_1, new_node)
+        self.assertEqual(4, len(self.uf.visible))
 
     # def test_no_recursive_paste(self):
     #     pass
